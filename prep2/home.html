@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>AL_EMNY | المواد الدراسية</title>
+
+  <link rel="icon" type="image/png" href="./image/logo.png" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Tajawal', 'Cairo', sans-serif;
+      background: linear-gradient(145deg, #eef2f9 0%, #dce5f0 100%);
+      color: #0a2a3b;
+      min-height: 100vh;
+      padding-bottom: 80px;
+      position: relative;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 10% 20%, rgba(10, 43, 78, 0.02) 0%, rgba(26, 58, 98, 0.03) 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    header {
+      background: linear-gradient(135deg, #0a2b4e 0%, #1e3a5f 100%);
+      padding: 1.2rem 1.5rem;
+      text-align: center;
+      box-shadow: 0 12px 25px -10px rgba(0, 0, 0, 0.2);
+      position: relative;
+      z-index: 5;
+      border-bottom: 2px solid rgba(144, 224, 239, 0.3);
+    }
+
+    .site-title {
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #ffffff;
+      text-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      font-family: 'Cairo', 'Tajawal', sans-serif;
+      transition: transform 0.2s ease, text-shadow 0.2s;
+      display: inline-block;
+    }
+    .site-title:hover {
+      transform: scale(1.02);
+      text-shadow: 0 4px 12px rgba(144, 224, 239, 0.4);
+    }
+
+    main.subjects {
+      max-width: 1300px;
+      margin: 2rem auto;
+      padding: 0 2rem;
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .subject-row {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .subject-row a {
+      background: #ffffff;
+      backdrop-filter: blur(2px);
+      color: #0a2b4e;
+      border: none;
+      padding: 1.1rem 2rem;
+      border-radius: 28px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      text-decoration: none;
+      box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0,0,0,0.02);
+      transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      letter-spacing: 0.3px;
+      border: 1px solid rgba(144, 224, 239, 0.3);
+      min-width: 180px;
+      justify-content: center;
+    }
+
+    .subject-row a i {
+      font-size: 1.35rem;
+      color: #1e5a7d;
+      transition: transform 0.2s;
+    }
+
+    .subject-row a:hover {
+      background: linear-gradient(115deg, #0f3b5f 0%, #1a4a72 100%);
+      color: #ffffff;
+      transform: translateY(-5px);
+      box-shadow: 0 20px 30px -12px rgba(10, 43, 78, 0.4);
+      border-color: #90e0ef70;
+    }
+
+    .subject-row a:hover i {
+      color: #f0f9ff;
+      transform: scale(1.05);
+    }
+
+    #admin-btn {
+      background: linear-gradient(105deg, #2b4f6e, #164466);
+      color: white;
+      border: none;
+      padding: 0.9rem 2.2rem;
+      font-size: 1.2rem;
+      font-weight: 600;
+      border-radius: 48px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: none; /* يظهر فقط عبر الجافاسكريبت للمسؤول */
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin: 1.5rem auto 0.5rem auto;
+      width: fit-content;
+      box-shadow: 0 5px 14px rgba(0,0,0,0.2);
+    }
+
+    #admin-btn i {
+      font-size: 1.3rem;
+    }
+
+    #admin-btn:hover {
+      background: linear-gradient(105deg, #1d4768, #0e3452);
+      transform: scale(1.02);
+      box-shadow: 0 12px 22px -8px #0a2b4e80;
+    }
+
+    footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid rgba(10, 43, 78, 0.15);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0.8rem 1rem;
+      gap: 2rem;
+      z-index: 20;
+      font-weight: 500;
+      color: #2c4d6e;
+    }
+
+    footer span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.9rem;
+    }
+
+    footer i {
+      color: #1e5f8e;
+    }
+
+    @media (max-width: 768px) {
+      main.subjects {
+        padding: 0 1.2rem;
+        margin: 1.5rem auto;
+        gap: 1.2rem;
+      }
+      .subject-row {
+        gap: 1rem;
+      }
+      .subject-row a {
+        width: 100%;
+        justify-content: center;
+        padding: 0.9rem 1rem;
+        font-size: 1rem;
+        min-width: unset;
+      }
+      .subject-row a i {
+        font-size: 1.2rem;
+      }
+      #admin-btn {
+        padding: 0.7rem 1.5rem;
+        font-size: 1rem;
+      }
+      footer {
+        padding: 0.6rem;
+        gap: 1rem;
+      }
+      footer span {
+        font-size: 0.75rem;
+      }
+      .site-title {
+        font-size: 1.8rem;
+      }
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #e2e8f0;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2c5a7a;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #0e3e5c;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="site-title">Nemo</div>
+  </header>
+
+  <main class="subjects">
+    <div class="subject-row">
+      <a href="./ar.html"><i class="fas fa-book-open"></i> اللغة العربية</a>
+      <a href="./E.html"><i class="fas fa-language"></i> English</a>
+      <a href="./M.html"><i class="fas fa-square-root-alt"></i> Math</a>
+    </div>
+    <div class="subject-row">
+      <a href="./S.html"><i class="fas fa-flask"></i> Science</a>
+      <a href="./so.html"><i class="fas fa-globe-africa"></i> دراسات</a>
+    </div>
+
+    <button id="admin-btn"><i class="fas fa-user-shield"></i> لوحة التحكم</button>
+  </main>
+
+  <footer>
+    <span><i class="far fa-copyright"></i> 2025 AL_EMNY</span>
+    <span><i class="fas fa-graduation-cap"></i> تعليم متكامل</span>
+  </footer>
+
+  <script type="module">
+    // 1. استيراد مكتبات وخدمات Firebase الأساسية
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    // 2. إعدادات مشروع Firebase الخاص بك (استبدلها ببيانات مشروعك الحقيقية)
+    const firebaseConfig = {
+  apiKey: "AIzaSyDQ8LFihzOPueW0_FCgRF6uEiAMgn24sF8",
+  authDomain: "nemo-8d0c7.firebaseapp.com",
+  projectId: "nemo-8d0c7",
+  storageBucket: "nemo-8d0c7.firebasestorage.app",
+  messagingSenderId: "585101385202",
+  appId: "1:585101385202:web:fb703a536893fb4aaadf6b"
+};
+    // تهيئة تطبيق Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const adminBtn = document.getElementById('admin-btn');
+    const ADMIN_EMAIL = "oh624762@gmail.com";
+
+    // دالة فحص وتحديث مظهر زر التحكم بناءً على الحساب الحالي
+    function checkAdminStatus(user) {
+      if (user && user.email === ADMIN_EMAIL) {
+        adminBtn.style.display = "inline-flex";
+        adminBtn.onclick = () => {
+          window.location.href = "./admain.html";
+        };
+      } else {
+        adminBtn.style.display = "none";
+      }
+    }
+
+    // مراقبة حالة تسجيل الدخول بشكل حي (تغنيك عن استدعاء الدالة يدوياً)
+    onAuthStateChanged(auth, (user) => {
+      checkAdminStatus(user);
+    });
+  </script>
+</body>
+</html>

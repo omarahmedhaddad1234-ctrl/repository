@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>لوحة التحكم - مدير nemo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif;
+        }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(145deg, #0f2027, #203a43, #2c5364);
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .dashboard {
+            max-width: 1200px;
+            width: 100%;
+        }
+        h1 {
+            text-align: center;
+            color: white;
+            font-weight: 700;
+            font-size: 2.5rem;
+            text-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            margin-bottom: 1rem;
+            letter-spacing: -0.5px;
+        }
+        .sub {
+            text-align: center;
+            color: #cfecf0;
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+        .cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: center;
+        }
+        .card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(12px);
+            border-radius: 2rem;
+            padding: 2rem 2rem 2.5rem;
+            width: 300px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.2);
+            cursor: pointer;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+        .card:hover {
+            transform: translateY(-10px);
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.5);
+        }
+        .card .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        .card h2 {
+            color: white;
+            font-size: 1.8rem;
+            margin-bottom: 0.75rem;
+        }
+        .card p {
+            color: #e0f2fe;
+            font-size: 1rem;
+        }
+        .logout-btn {
+            display: block;
+            width: fit-content;
+            margin: 3rem auto 0;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid #fff3;
+            padding: 0.7rem 2rem;
+            border-radius: 3rem;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            text-align: center;
+        }
+        .logout-btn:hover {
+            background: #c0392b;
+            border-color: #c0392b;
+        }
+        @media (max-width: 700px) {
+            .cards { gap: 1.2rem; }
+            .card { width: 260px; padding: 1.5rem; }
+            h1 { font-size: 1.8rem; }
+        }
+    </style>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+<div class="dashboard">
+    <h1>🌟 لوحة تحكم المدير</h1>
+    <div class="sub">مرحباً أيها المدير | nemo Learning Platform</div>
+    <div class="cards">
+        <div class="card" onclick="location.href='up.html'">
+            <div class="icon">📤</div>
+            <h2>رفع فيديو</h2>
+            <p>إضافة محتوى جديد إلى المكتبة</p>
+        </div>
+        <div class="card" onclick="location.href='code.html'">
+            <div class="icon">🎫</div>
+            <h2>توليد كود جديد</h2>
+            <p>إنشاء أكواد دخول للطلاب</p>
+        </div>
+    </div>
+    <div class="logout-btn" onclick="logout()">تسجيل الخروج</div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDQ8LFihzOPueW0_FCgRF6uEiAMgn24sF8",
+        authDomain: "nemo-8d0c7.firebaseapp.com",
+        projectId: "nemo-8d0c7",
+        storageBucket: "nemo-8d0c7.firebasestorage.app",
+        messagingSenderId: "585101385202",
+        appId: "1:585101385202:web:fb703a536893fb4aaadf6b"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // التحقق من وجود جلسة المدير في sessionStorage
+    if (!sessionStorage.getItem("adminLoggedIn") || sessionStorage.getItem("adminEmail") !== "oh624762@gmail.com") {
+        // إعادة التوجيه إلى صفحة الدخول الرئيسية
+        window.location.href = "../index.html";
+    }
+
+    async function logout() {
+        // تسجيل الخروج من Firebase Auth إذا كان هناك مستخدم
+        if (auth.currentUser) {
+            await auth.signOut();
+        }
+        sessionStorage.removeItem("adminLoggedIn");
+        sessionStorage.removeItem("adminEmail");
+        window.location.href = "../index.html";
+    }
+</script>
+</body>
+</html>

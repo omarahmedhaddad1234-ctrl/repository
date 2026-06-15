@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم الأدمن - إدارة المحتوى | Nemo</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { font-family: 'Tajawal', sans-serif; }
+        .card-hover:hover { transform: translateY(-2px); transition: 0.2s; }
+        .progress-bar { transition: width 0.3s ease; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <header class="bg-gray-900 text-white py-4 shadow-lg">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div class="text-xl font-bold">Nemo | لوحة الأدمن</div>
+            <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm"><i class="fas fa-sign-out-alt ml-2"></i>تسجيل خروج</button>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- نموذج رفع المحتوى -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2"><i class="fas fa-upload ml-2 text-blue-600"></i>رفع محتوى جديد</h2>
+            <form id="uploadForm" class="space-y-5">
+                <div class="grid md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2">📚 الصف الدراسي</label>
+                        <select id="grade" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500">
+                            <option value="prep1">الصف الأول الإعدادي (prep1)</option>
+                            <option value="prep2">الصف الثاني الإعدادي (prep2)</option>
+                            <option value="prep3">الصف الثالث الإعدادي (prep3)</option>
+                            <option value="course">كورس البرمجة (course)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2">📖 المادة / الكورس</label>
+                        <select id="subject" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500">
+                            <option value="arabic">اللغة العربية</option>
+                            <option value="english">اللغة الإنجليزية</option>
+                            <option value="math">الرياضيات</option>
+                            <option value="science">العلوم</option>
+                            <option value="social">الدراسات الاجتماعية</option>
+                            <option value="programming">كورس البرمجة</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">🏷️ نوع المحتوى</label>
+                    <div class="flex flex-wrap gap-4">
+                        <label class="inline-flex items-center"><input type="radio" name="contentType" value="lesson" checked> <span class="mr-2">📹 فيديو شرح (lesson)</span></label>
+                        <label class="inline-flex items-center"><input type="radio" name="contentType" value="exercise"> <span class="mr-2">✏️ تدريب (exercise)</span></label>
+                        <label class="inline-flex items-center"><input type="radio" name="contentType" value="exam"> <span class="mr-2">📝 اختبار (exam)</span></label>
+                        <label class="inline-flex items-center"><input type="radio" name="contentType" value="file"> <span class="mr-2">📄 ملف PDF/صور/إلخ (file)</span></label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">العنوان</label>
+                    <input type="text" id="title" placeholder="مثال: الدرس الأول - مقدمة في البرمجة" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                
+                <!-- حقل الرابط المباشر (جديد) -->
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">🔗 رابط مباشر (YouTube, Google Drive, أو أي رابط)</label>
+                    <div class="flex gap-2">
+                        <input type="url" id="directUrl" placeholder="https://www.youtube.com/watch?v=... أو https://drive.google.com/file/d/..." class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500">
+                        <button type="button" id="convertDriveBtn" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm whitespace-nowrap"><i class="fab fa-google-drive"></i> تحويل رابط Drive</button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">✔️ يمكنك وضع رابط يوتيوب عادي أو رابط جوجل درايف (سيتم تحويله تلقائياً للصيغة المناسبة). إذا قمت بملء هذا الحقل، سيتم تجاهل رفع الملف.</p>
+                </div>
+
+                <!-- رفع ملف محلي (اختياري) -->
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">📁 أو رفع ملف من جهازك (اختياري)</label>
+                    <input type="file" id="fileInput" accept="video/*,application/pdf,image/*" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <p class="text-xs text-gray-500 mt-1">✔️ يُستخدم فقط إذا كان الحقل أعلاه فارغاً. يدعم الفيديو، PDF، الصور.</p>
+                </div>
+
+                <div id="progressContainer" class="hidden">
+                    <div class="flex justify-between text-sm mb-1">
+                        <span>جاري الرفع...</span>
+                        <span id="progressPercent">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <button type="submit" id="submitBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition"><i class="fas fa-cloud-upload-alt ml-2"></i> حفظ المحتوى</button>
+            </form>
+            <div id="uploadMessage" class="mt-4 hidden p-3 rounded-lg"></div>
+        </div>
+
+        <!-- عرض آخر المحتويات المرفوعة -->
+        <div class="bg-white rounded-2xl shadow-lg p-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2"><i class="fas fa-list ml-2 text-green-600"></i>آخر المحتويات المرفوعة</h2>
+            <div id="contentList" class="overflow-x-auto">
+                <table class="min-w-full bg-white border">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="py-2 px-3 border-b">الصف</th>
+                            <th class="py-2 px-3 border-b">المادة</th>
+                            <th class="py-2 px-3 border-b">النوع</th>
+                            <th class="py-2 px-3 border-b">العنوان</th>
+                            <th class="py-2 px-3 border-b">الرابط</th>
+                            <th class="py-2 px-3 border-b">إجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody id="contentTableBody">
+                        <tr><td colspan="6" class="text-center py-4 text-gray-500">جاري التحميل...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDQ8LFihzOPueW0_FCgRF6uEiAMgn24sF8",
+            authDomain: "nemo-8d0c7.firebaseapp.com",
+            projectId: "nemo-8d0c7",
+            storageBucket: "nemo-8d0c7.firebasestorage.app",
+            messagingSenderId: "585101385202",
+            appId: "1:585101385202:web:fb703a536893fb4aaadf6b"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        const uploadForm = document.getElementById('uploadForm');
+        const uploadMsg = document.getElementById('uploadMessage');
+        const contentTableBody = document.getElementById('contentTableBody');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const fileInput = document.getElementById('fileInput');
+        const directUrlInput = document.getElementById('directUrl');
+        const convertDriveBtn = document.getElementById('convertDriveBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const progressPercent = document.getElementById('progressPercent');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // تحويل رابط Google Drive إلى رابط مباشر قابل للتشغيل في iframe
+        function convertGoogleDriveUrl(url) {
+            if (!url) return '';
+            // التعامل مع رابط المشاركة العادي: https://drive.google.com/file/d/FILE_ID/view?usp=sharing
+            let match = url.match(/\/file\/d\/([^\/]+)/);
+            if (match && match[1]) {
+                return `https://drive.google.com/uc?export=download&id=${match[1]}`;
+            }
+            // ربما رابط مباشر من النوع: https://drive.google.com/uc?export=download&id=...
+            if (url.includes('uc?export=download') || url.includes('uc?id=')) {
+                return url;
+            }
+            // ربما رابط embed: https://drive.google.com/file/d/FILE_ID/preview
+            match = url.match(/\/d\/([^\/]+)\/preview/);
+            if (match && match[1]) {
+                return `https://drive.google.com/uc?export=download&id=${match[1]}`;
+            }
+            return url;
+        }
+
+        convertDriveBtn.addEventListener('click', () => {
+            let rawUrl = directUrlInput.value.trim();
+            if (!rawUrl) {
+                showMessage("⚠️ الرجاء إدخال رابط Google Drive أولاً", "error");
+                return;
+            }
+            const converted = convertGoogleDriveUrl(rawUrl);
+            directUrlInput.value = converted;
+            showMessage("✅ تم تحويل الرابط إلى صيغة مباشرة (يمكنك الآن حفظ المحتوى)", "success");
+        });
+
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                alert("يرجى تسجيل الدخول أولاً للوصول إلى لوحة الأدمن");
+                window.location.href = "../login.html";
+            } else {
+                loadRecentContent();
+            }
+        });
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const grade = document.getElementById('grade').value;
+            const subject = document.getElementById('subject').value;
+            const contentType = document.querySelector('input[name="contentType"]:checked').value;
+            const title = document.getElementById('title').value.trim();
+            const directUrl = directUrlInput.value.trim();
+            const file = fileInput.files[0];
+
+            if (!title) {
+                showMessage("⚠️ الرجاء إدخال العنوان", "error");
+                return;
+            }
+
+            let finalMediaUrl = null;
+
+            // حالة 1: يوجد رابط مباشر
+            if (directUrl) {
+                finalMediaUrl = convertGoogleDriveUrl(directUrl); // تأكد من تحويله مرة أخيرة
+                // حفظ البيانات مباشرة
+                try {
+                    const newContent = {
+                        grade, subject, contentType, title,
+                        mediaUrl: finalMediaUrl,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    await db.collection('content').add(newContent);
+                    showMessage("✅ تم حفظ المحتوى بالرابط بنجاح!", "success");
+                    uploadForm.reset();
+                    document.querySelector('input[name="contentType"][value="lesson"]').checked = true;
+                    directUrlInput.value = '';
+                    fileInput.value = '';
+                    loadRecentContent();
+                } catch (err) {
+                    showMessage("❌ خطأ في الحفظ: " + err.message, "error");
+                }
+                return;
+            }
+
+            // حالة 2: لا يوجد رابط مباشر، نستخدم رفع الملف
+            if (!file) {
+                showMessage("⚠️ إما أن تضع رابطاً مباشراً أو تختار ملفاً للرفع", "error");
+                return;
+            }
+
+            // رفع الملف
+            submitBtn.disabled = true;
+            progressContainer.classList.remove('hidden');
+            progressBar.style.width = '0%';
+            progressPercent.innerText = '0%';
+
+            try {
+                const fileExtension = file.name.split('.').pop();
+                const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExtension}`;
+                let folder = 'others';
+                if (contentType === 'lesson') folder = 'videos';
+                else if (contentType === 'exercise') folder = 'exercises';
+                else if (contentType === 'exam') folder = 'exams';
+                else if (contentType === 'file') folder = 'files';
+                const storagePath = `content/${folder}/${grade}/${subject}/${fileName}`;
+                const storageRef = storage.ref(storagePath);
+                
+                const uploadTask = storageRef.put(file);
+                uploadTask.on('state_changed', 
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        progressBar.style.width = `${progress}%`;
+                        progressPercent.innerText = `${Math.round(progress)}%`;
+                    },
+                    (error) => {
+                        console.error(error);
+                        showMessage("❌ فشل رفع الملف: " + error.message, "error");
+                        submitBtn.disabled = false;
+                        progressContainer.classList.add('hidden');
+                    },
+                    async () => {
+                        const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                        const newContent = {
+                            grade, subject, contentType, title,
+                            mediaUrl: downloadURL,
+                            originalFileName: file.name,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        };
+                        await db.collection('content').add(newContent);
+                        showMessage("✅ تم رفع المحتوى بنجاح!", "success");
+                        uploadForm.reset();
+                        document.querySelector('input[name="contentType"][value="lesson"]').checked = true;
+                        fileInput.value = '';
+                        loadRecentContent();
+                        submitBtn.disabled = false;
+                        progressContainer.classList.add('hidden');
+                    }
+                );
+            } catch (err) {
+                console.error(err);
+                showMessage("❌ خطأ: " + err.message, "error");
+                submitBtn.disabled = false;
+                progressContainer.classList.add('hidden');
+            }
+        });
+
+        function showMessage(msg, type) {
+            uploadMsg.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
+            if (type === 'success') {
+                uploadMsg.classList.add('bg-green-100', 'text-green-700');
+            } else {
+                uploadMsg.classList.add('bg-red-100', 'text-red-700');
+            }
+            uploadMsg.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} ml-2"></i> ${msg}`;
+            uploadMsg.classList.remove('hidden');
+            setTimeout(() => uploadMsg.classList.add('hidden'), 5000);
+        }
+
+        async function loadRecentContent() {
+            try {
+                const snapshot = await db.collection('content')
+                    .orderBy('createdAt', 'desc')
+                    .limit(20)
+                    .get();
+                if (snapshot.empty) {
+                    contentTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">لا يوجد محتوى مرفوع بعد</td></tr>';
+                    return;
+                }
+                let html = '';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const gradeLabel = getGradeLabel(data.grade);
+                    const subjectLabel = getSubjectLabel(data.subject);
+                    const typeLabel = getTypeLabel(data.contentType);
+                    html += `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="py-2 px-3 text-sm">${gradeLabel}</td>
+                            <td class="py-2 px-3 text-sm">${subjectLabel}</td>
+                            <td class="py-2 px-3 text-sm">${typeLabel}</td>
+                            <td class="py-2 px-3 text-sm font-medium">${escapeHtml(data.title)}</td>
+                            <td class="py-2 px-3 text-sm truncate max-w-xs"><a href="${data.mediaUrl}" target="_blank" class="text-blue-500 hover:underline">${truncate(data.mediaUrl, 40)}</a></td>
+                            <td class="py-2 px-3"><button onclick="deleteContent('${doc.id}')" class="text-red-500 hover:text-red-700"><i class="fas fa-trash-alt"></i></button></td>
+                        </tr>
+                    `;
+                });
+                contentTableBody.innerHTML = html;
+            } catch (err) {
+                console.error(err);
+                contentTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-red-500">خطأ في التحميل</td></tr>';
+            }
+        }
+
+        window.deleteContent = async (docId) => {
+            if (!confirm("هل أنت متأكد من حذف هذا المحتوى؟ سيتم حذف الملف أيضاً من التخزين إن أمكن.")) return;
+            try {
+                const docRef = db.collection('content').doc(docId);
+                const docSnap = await docRef.get();
+                const mediaUrl = docSnap.data()?.mediaUrl;
+                if (mediaUrl && mediaUrl.includes('firebasestorage.googleapis.com')) {
+                    try {
+                        const storageRef = storage.refFromURL(mediaUrl);
+                        await storageRef.delete();
+                    } catch(e) { console.warn("فشل حذف الملف من التخزين", e); }
+                }
+                await docRef.delete();
+                showMessage("🗑️ تم حذف المحتوى والملف", "success");
+                loadRecentContent();
+            } catch (err) {
+                alert("فشل الحذف: " + err.message);
+            }
+        };
+
+        function getGradeLabel(grade) {
+            const map = { prep1: "الأول الإعدادي", prep2: "الثاني الإعدادي", prep3: "الثالث الإعدادي", course: "كورس البرمجة" };
+            return map[grade] || grade;
+        }
+        function getSubjectLabel(subject) {
+            const map = { arabic: "عربي", english: "إنجليزي", math: "رياضيات", science: "علوم", social: "دراسات", programming: "برمجة" };
+            return map[subject] || subject;
+        }
+        function getTypeLabel(type) {
+            const map = { lesson: "فيديو", exercise: "تدريب", exam: "اختبار", file: "ملف" };
+            return map[type] || type;
+        }
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        function truncate(str, len) {
+            if (!str) return '';
+            return str.length > len ? str.substr(0, len-3) + '...' : str;
+        }
+
+        logoutBtn.addEventListener('click', () => {
+            auth.signOut().then(() => {
+                window.location.href = "../login.html";
+            });
+        });
+    </script>
+</body>
+</html>

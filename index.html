@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>nemo | منصة التعلم - دخول سهل</title>
+    <style>
+        /* ========================================
+           CSS STYLES - تصميم رايق، هادئ واحترافي
+        ======================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: radial-gradient(#b9d4e7 1.2px, transparent 1.2px);
+            background-size: 28px 28px;
+            opacity: 0.25;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .card {
+            max-width: 500px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(2px);
+            border-radius: 2rem;
+            padding: 2.2rem 2rem 2.5rem 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: transform 0.25s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            position: relative;
+            z-index: 2;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 50px -18px rgba(0, 0, 0, 0.25);
+        }
+
+        .card h2 {
+            text-align: center;
+            font-size: 1.9rem;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            color: #1a2c3e;
+            margin-bottom: 2rem;
+            border-right: 4px solid #6c9ebf;
+            padding-right: 1rem;
+            width: fit-content;
+            margin-right: auto;
+            margin-left: auto;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.9rem 1.2rem;
+            font-size: 1rem;
+            background: #ffffff;
+            border: 1.5px solid #e2edf2;
+            border-radius: 1.2rem;
+            outline: none;
+            transition: all 0.2s ease;
+            color: #1f2f3a;
+            font-weight: 500;
+        }
+
+        input::placeholder {
+            color: #9bb7c9;
+            font-weight: 400;
+            font-size: 0.95rem;
+        }
+
+        input:focus, select:focus {
+            border-color: #6c9ebf;
+            box-shadow: 0 6px 14px rgba(108, 158, 191, 0.15);
+            transform: scale(1.01);
+        }
+
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%236c9ebf' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+            background-repeat: no-repeat;
+            background-position: left 1rem center;
+            padding-left: 2.5rem;
+        }
+
+        button {
+            background: #2c4b64;
+            color: white;
+            border: none;
+            padding: 0.9rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 2rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            margin-top: 0.5rem;
+            letter-spacing: 0.3px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        button:hover {
+            background: #1e3a4d;
+            transform: scale(0.98);
+            box-shadow: 0 8px 18px rgba(44, 75, 100, 0.2);
+        }
+
+        p {
+            text-align: center;
+            margin-top: 1rem;
+            color: #5c6f87;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        a {
+            color: #2c4b64;
+            text-decoration: none;
+            font-weight: 700;
+            border-bottom: 1px dashed #bdd4e2;
+            transition: color 0.2s, border-color 0.2s;
+            cursor: pointer;
+        }
+
+        a:hover {
+            color: #103449;
+            border-bottom-color: #2c4b64;
+        }
+
+        .validation-message {
+            font-size: 0.75rem;
+            margin-top: -0.8rem;
+            margin-bottom: 0.5rem;
+            padding-right: 1rem;
+            color: #e74c3c;
+            display: none;
+        }
+
+        .validation-message.show {
+            display: block;
+            animation: slideDown 0.2s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .password-strength {
+            margin-top: -0.8rem;
+            margin-bottom: 0.5rem;
+            padding-right: 1rem;
+        }
+
+        .strength-bar {
+            height: 4px;
+            border-radius: 2px;
+            background: #e0e0e0;
+            margin-top: 5px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .strength-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease, background 0.3s ease;
+            border-radius: 2px;
+        }
+
+        .strength-text {
+            font-size: 0.7rem;
+            color: #7f8c8d;
+            margin-top: 3px;
+        }
+
+        .signup-card { max-width: 550px; }
+        .form-container { display: none; }
+        .form-container.active { display: block; }
+
+        .custom-alert {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10000;
+            animation: fadeInScale 0.2s ease-out;
+        }
+
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .debug-btn {
+            display: block;
+            margin-top: 15px;
+            background: #6c9ebf33;
+            color: #2c4b64;
+            border: 1px dashed #2c4b64;
+            font-size: 0.75rem;
+            padding: 0.4rem;
+            border-radius: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .debug-btn:hover {
+            background: #2c4b64;
+            color: white;
+        }
+
+        @media (max-width: 550px) {
+            .card { padding: 1.8rem 1.5rem 2rem 1.5rem; }
+            .card h2 { font-size: 1.6rem; }
+            input, select, button { padding: 0.8rem 1rem; }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(3px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255,255,255,0.5);
+            border-top: 5px solid #2c4b64;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+<div class="card" id="appCard">
+    <!-- 🔑 واجهة تسجيل الدخول -->
+    <div id="loginContainer" class="form-container active">
+        <h2>مرحبا بعودتك</h2>
+        <form id="loginForm">
+            <input type="email" id="loginEmail" placeholder="البريد الإلكتروني" autocomplete="email" required>
+            <input type="password" id="loginPassword" placeholder="كلمة المرور" autocomplete="current-password" required>
+            <button type="submit">تسجيل الدخول</button>
+            <p>ليس لديك حساب؟ <a onclick="switchToSignup()">إنشاء حساب</a></p>
+        </form>
+        <div id="debugArea" style="margin-top: 1rem; text-align: center;"></div>
+    </div>
+
+    <!-- 📝 واجهة حساب جديد (بدون قيود تفعيل) -->
+    <div id="signupContainer" class="form-container">
+        <h2>إنشاء حساب جديد</h2>
+        <form id="signupForm">
+            <input type="text" id="fullName" placeholder="الاسم الكامل" autocomplete="name" required>
+            <input type="text" id="signupUsername" placeholder="اسم المستخدم" autocomplete="off" required>
+            <input type="email" id="signupEmail" placeholder="البريد الإلكتروني" autocomplete="email" required>
+            <input type="password" id="signupPassword" placeholder="كلمة المرور" autocomplete="new-password" required>
+            <input type="password" id="confirmPassword" placeholder="تأكيد كلمة المرور" autocomplete="off" required>
+            <select id="signupGrade" required>
+                <option value="">-- اختر الصف أو الكورس --</option>
+                <option value="prep1">الصف الأول الإعدادي</option>
+                <option value="prep2">الصف الثاني الإعدادي</option>
+                <option value="prep3">الصف الثالث الإعدادي</option>
+                <option value="course">الكورس</option>
+            </select>
+            <button type="submit">إنشاء حساب</button>
+            <p>لديك حساب بالفعل؟ <a onclick="switchToLogin()">تسجيل الدخول</a></p>
+        </form>
+    </div>
+</div>
+
+<script>
+    // ========== Firebase Config ==========
+    const firebaseConfig = {
+        apiKey: "AIzaSyDQ8LFihzOPueW0_FCgRF6uEiAMgn24sF8",
+        authDomain: "nemo-8d0c7.firebaseapp.com",
+        projectId: "nemo-8d0c7",
+        storageBucket: "nemo-8d0c7.firebasestorage.app",
+        messagingSenderId: "585101385202",
+        appId: "1:585101385202:web:fb703a536893fb4aaadf6b"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // ========== بيانات المدير الخاص ==========
+    const SUPER_ADMIN_EMAIL = "oh624762@gmail.com";
+    const SUPER_ADMIN_PASSWORD = "omar haddad4444";
+
+    // ========== دوال مساعدة ==========
+    function showLoading(show = true) {
+        let loader = document.querySelector('.loading-overlay');
+        if (show) {
+            if (loader) return;
+            const div = document.createElement('div');
+            div.className = 'loading-overlay';
+            div.innerHTML = '<div class="spinner"></div>';
+            document.body.appendChild(div);
+        } else {
+            if (loader) loader.remove();
+        }
+    }
+
+    function switchToSignup() {
+        document.getElementById('loginContainer').classList.remove('active');
+        document.getElementById('signupContainer').classList.add('active');
+        document.getElementById('appCard').classList.add('signup-card');
+    }
+
+    function switchToLogin() {
+        document.getElementById('signupContainer').classList.remove('active');
+        document.getElementById('loginContainer').classList.add('active');
+        document.getElementById('appCard').classList.remove('signup-card');
+    }
+
+    function showCustomAlert(icon, title, message, callback) {
+        const oldAlert = document.querySelector(".custom-alert");
+        if (oldAlert) oldAlert.remove();
+
+        let bgColor, iconEmoji;
+        if (icon === "success") { bgColor = "linear-gradient(135deg, #2c4b64, #1e3a4d)"; iconEmoji = "✅"; }
+        else if (icon === "warning") { bgColor = "linear-gradient(135deg, #f39c12, #e67e22)"; iconEmoji = "⚠️"; }
+        else if (icon === "error") { bgColor = "linear-gradient(135deg, #e74c3c, #c0392b)"; iconEmoji = "❌"; }
+        else { bgColor = "#2c4b64"; iconEmoji = "ℹ️"; }
+
+        const alertDiv = document.createElement("div");
+        alertDiv.className = "custom-alert";
+        alertDiv.innerHTML = `
+            <div style="background: ${bgColor}; direction: rtl; text-align: center; padding: 1rem 1.5rem; border-radius: 1.2rem; color: white; box-shadow: 0 20px 35px -10px rgba(0,0,0,0.2); min-width: 280px;">
+                <div style="font-size: 2rem; margin-bottom: 6px;">${iconEmoji}</div>
+                <h3 style="margin: 0 0 8px 0; font-weight: 600;">${title}</h3>
+                <p style="margin: 0; font-size: 0.85rem; opacity: 0.95;">${message}</p>
+                <div style="margin-top: 12px;"><button class="alert-close-btn" style="background: rgba(255,255,255,0.2); border: none; padding: 5px 14px; border-radius: 50px; color: white; cursor: pointer; font-weight: 500;">حسنًا</button></div>
+            </div>
+        `;
+        document.body.appendChild(alertDiv);
+        const closeBtn = alertDiv.querySelector(".alert-close-btn");
+        closeBtn.addEventListener("click", () => {
+            alertDiv.remove();
+            if (callback && typeof callback === "function") callback();
+        });
+    }
+
+    function getGradeName(gradeValue) {
+        const map = { "prep1": "الصف الأول الإعدادي", "prep2": "الصف الثاني الإعدادي", "prep3": "الصف الثالث الإعدادي", "course": "الكورس" };
+        return map[gradeValue] || "الصفحة الرئيسية";
+    }
+
+    function redirectToGrade(grade) {
+        let path = "";
+        switch (grade) {
+            case "prep1": path = "prep1/home.html"; break;
+            case "prep2": path = "prep2/home.html"; break;
+            case "prep3": path = "prep3/home.html"; break;
+            case "course": path = "course/home.html"; break;
+            default: path = "home.html";
+        }
+        window.location.href = path;
+    }
+
+    // ========== تسجيل الدخول (بدون حظر الحسابات غير المفعلة) ==========
+    async function handleLogin(event) {
+        event.preventDefault();
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+
+        if (!email || !password) {
+            showCustomAlert("warning", "تنبيه", "البريد الإلكتروني وكلمة المرور مطلوبة");
+            return;
+        }
+
+        // حالة خاصة: حساب المدير الخارق
+        if (email === SUPER_ADMIN_EMAIL) {
+            await auth.signInWithEmailAndPassword(email, password);
+            showCustomAlert(
+                "success",
+                "مرحباً أيها المدير 👑",
+                "تم تسجيل الدخول بنجاح",
+                () => {
+                    window.location.href = "admain/admain.html";
+                }
+            );
+            return;
+        }
+
+        // المسار العادي: باقي المستخدمين (Firebase Auth + Firestore)
+        showLoading(true);
+        try {
+            const userCredential = await auth.signInWithEmailAndPassword(email, password);
+            const uid = userCredential.user.uid;
+
+            // جلب بيانات المستخدم من Firestore (الصف، اسم المستخدم، بدون التحقق من isActivated)
+            const userDoc = await db.collection("users").doc(uid).get();
+            let grade = "prep1";
+            let username = "";
+            
+            if (userDoc.exists) {
+                const data = userDoc.data();
+                grade = data.grade || "prep1";
+                username = data.username || "";
+                // ✅ تم إزالة شرط isActivated تماماً — أي حساب يستطيع الدخول حتى لو كان غير مفعّل.
+                // (لا يوجد حظر بناءً على isActivated)
+            } else {
+                // حالة نادرة: مستخدم موجود في Auth لكن ليس له وثيقة في Firestore
+                showCustomAlert("error", "حساب غير مكتمل", "لم يتم العثور على بيانات حسابك. يرجى التواصل مع الدعم.");
+                await auth.signOut();
+                showLoading(false);
+                return;
+            }
+
+            // تخزين جلسة المستخدم
+            sessionStorage.setItem("loggedInUser", JSON.stringify({
+                uid: uid,
+                username: username,
+                email: email,
+                grade: grade
+            }));
+
+            showCustomAlert("success", "مرحبًا بك 👋", `تم تسجيل الدخول بنجاح، جارٍ التحويل إلى ${getGradeName(grade)}`, () => {
+                redirectToGrade(grade);
+            });
+        } catch (error) {
+            console.error("Login error:", error);
+            let friendlyMsg = "فشل تسجيل الدخول، تحقق من البريد وكلمة المرور.";
+            if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                friendlyMsg = "البريد الإلكتروني أو كلمة المرور غير صحيحة.";
+            } else if (error.code === 'auth/invalid-email') {
+                friendlyMsg = "البريد الإلكتروني غير صالح.";
+            } else if (error.code === 'auth/too-many-requests') {
+                friendlyMsg = "تم تعطيل الحساب مؤقتًا بسبب محاولات كثيرة. حاول لاحقًا.";
+            } else {
+                friendlyMsg = error.message;
+            }
+            showCustomAlert("error", "خطأ في الدخول", friendlyMsg);
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // ========== إنشاء حساب جديد (بدون تفعيل مسبق - يدخل فوراً بعد إنشاء الحساب) ==========
+    async function handleSignup(event) {
+        event.preventDefault();
+        const fullName = document.getElementById('fullName').value.trim();
+        const username = document.getElementById('signupUsername').value.trim();
+        const email = document.getElementById('signupEmail').value.trim();
+        const password = document.getElementById('signupPassword').value;
+        const confirm = document.getElementById('confirmPassword').value;
+        const grade = document.getElementById('signupGrade').value;
+
+        if (!fullName || !username || !email || !password || !confirm || !grade) {
+            showCustomAlert("warning", "تنبيه", "يرجى ملء جميع الحقول");
+            return;
+        }
+        if (password.length < 6) {
+            showCustomAlert("warning", "تنبيه", "كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+            return;
+        }
+        if (password !== confirm) {
+            showCustomAlert("warning", "تنبيه", "كلمة المرور غير متطابقة");
+            return;
+        }
+        const emailPattern = /^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/;
+        if (!emailPattern.test(email)) {
+            showCustomAlert("warning", "تنبيه", "البريد الإلكتروني غير صحيح");
+            return;
+        }
+        if (username.length < 3) {
+            showCustomAlert("warning", "تنبيه", "اسم المستخدم يجب أن يكون 3 أحرف على الأقل");
+            return;
+        }
+
+        showLoading(true);
+        try {
+            // التحقق من تفرد اسم المستخدم
+            const usernameQuery = await db.collection("users").where("username", "==", username).get();
+            if (!usernameQuery.empty) {
+                showCustomAlert("warning", "تنبيه", "اسم المستخدم هذا موجود بالفعل، اختر اسمًا آخر.");
+                showLoading(false);
+                return;
+            }
+
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            const uid = userCredential.user.uid;
+
+            // الحساب الجديد: isActivated = false (للتاريخ) لكن هذا لن يمنع الدخول بعد الآن
+            const userData = {
+                uid: uid,
+                name: fullName,
+                username: username,
+                email: email,
+                grade: grade,
+                role: "user",
+                isActivated: false,   // قابل للتغيير لكن لا يؤثر على الدخول
+                registeredAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            await db.collection("users").doc(uid).set(userData);
+
+            // لا نقوم بتسجيل الخروج تلقائياً، بل نسجل الدخول مباشرة لأن الحساب صار جاهزاً
+            // (تسجيل الدخول مجدداً باستخدام بيانات الحساب الجديد)
+            await auth.signOut();  // نخروج مؤقتاً ثم ندخل لضمان جلسة نظيفة
+            const loginAgain = await auth.signInWithEmailAndPassword(email, password);
+            
+            // جلب الصف لتوجيهه
+            const gradeRedirect = grade;
+            sessionStorage.setItem("loggedInUser", JSON.stringify({
+                uid: uid,
+                username: username,
+                email: email,
+                grade: gradeRedirect
+            }));
+
+            showCustomAlert("success", "تهانينا! 🎉", `أهلاً بك ${fullName}، تم إنشاء حسابك بنجاح ويمكنك الدخول فوراً.`, () => {
+                redirectToGrade(gradeRedirect);
+            });
+        } catch (error) {
+            console.error("Signup error:", error);
+            let errorMsg = "حدث خطأ أثناء إنشاء الحساب.";
+            if (error.code === 'auth/email-already-in-use') errorMsg = "البريد الإلكتروني مسجل بالفعل. جرب تسجيل الدخول.";
+            else if (error.code === 'auth/weak-password') errorMsg = "كلمة المرور ضعيفة جدًا، استخدم 6 أحرف على الأقل.";
+            else if (error.code === 'auth/invalid-email') errorMsg = "البريد الإلكتروني غير صحيح.";
+            else if (error.code === 'permission-denied') errorMsg = "⚠️ أذونات Firebase: تأكد من قواعد Firestore تسمح بالكتابة.";
+            else errorMsg = error.message;
+            showCustomAlert("error", "فشل إنشاء الحساب", errorMsg);
+            try {
+                const currentUser = auth.currentUser;
+                if (currentUser) await currentUser.delete();
+            } catch(e) { console.warn("تنظيف الحساب الفاشل", e); }
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // ========== دوال التحقق المباشر (UI) ==========
+    function showMessage(el, msg) { if (el) { el.textContent = msg; el.classList.add("show"); } }
+    function hideMessage(el) { if (el) el.classList.remove("show"); }
+
+    function validateFullName() {
+        const val = document.getElementById('fullName').value.trim();
+        const msgDiv = document.getElementById("fullNameMsg");
+        if (!val) { showMessage(msgDiv, "الاسم الكامل مطلوب"); return false; }
+        if (val.length < 3) { showMessage(msgDiv, "الاسم الكامل 3 أحرف على الأقل"); return false; }
+        hideMessage(msgDiv);
+        return true;
+    }
+    function validateSignupPassword() {
+        const pwd = document.getElementById('signupPassword').value;
+        const msgDiv = document.getElementById("signupPasswordMsg");
+        if (!pwd) { showMessage(msgDiv, "كلمة المرور مطلوبة"); return false; }
+        if (pwd.length < 6) { showMessage(msgDiv, "كلمة المرور 6 أحرف على الأقل"); return false; }
+        hideMessage(msgDiv);
+        return true;
+    }
+    function checkPasswordMatch() {
+        const pwd = document.getElementById('signupPassword').value;
+        const confirm = document.getElementById('confirmPassword').value;
+        const msgDiv = document.getElementById("confirmMsg");
+        if (!confirm) { showMessage(msgDiv, "تأكيد كلمة المرور مطلوب"); return false; }
+        if (pwd !== confirm) { showMessage(msgDiv, "كلمة المرور غير متطابقة"); return false; }
+        hideMessage(msgDiv);
+        return true;
+    }
+    function validateSignupGrade() {
+        const grade = document.getElementById('signupGrade').value;
+        const msgDiv = document.getElementById("signupGradeMsg");
+        if (!grade) { showMessage(msgDiv, "اختر الصف أو الكورس"); return false; }
+        hideMessage(msgDiv);
+        return true;
+    }
+    function updatePasswordStrength() {
+        const password = document.getElementById('signupPassword').value;
+        const fill = document.querySelector(".strength-fill");
+        const textSpan = document.querySelector(".strength-text");
+        if (!fill || !textSpan) return;
+        let strength = 0;
+        if (password.length >= 6) strength++;
+        if (password.length >= 8) strength++;
+        if (/[A-Z]/.test(password)) strength++;
+        if (/[0-9]/.test(password)) strength++;
+        let percent = 0, msg = "", color = "#e74c3c";
+        if (password.length === 0) { percent = 0; msg = ""; }
+        else if (strength <= 2) { percent = 33; msg = "ضعيفة"; color = "#e74c3c"; }
+        else if (strength === 3) { percent = 66; msg = "متوسطة"; color = "#f39c12"; }
+        else { percent = 100; msg = "قوية"; color = "#27ae60"; }
+        fill.style.width = percent + "%";
+        fill.style.background = color;
+        textSpan.textContent = msg;
+        textSpan.style.color = color;
+    }
+
+    function addValidationMessages() {
+        const fields = [
+            { id: "fullName", msgId: "fullNameMsg" },
+            { id: "signupPassword", msgId: "signupPasswordMsg" },
+            { id: "confirmPassword", msgId: "confirmMsg" },
+            { id: "signupGrade", msgId: "signupGradeMsg" }
+        ];
+        fields.forEach(f => {
+            const inp = document.getElementById(f.id);
+            if (inp && !document.getElementById(f.msgId)) {
+                const div = document.createElement("div");
+                div.id = f.msgId;
+                div.className = "validation-message";
+                inp.parentNode.insertBefore(div, inp.nextSibling);
+            }
+        });
+        const pwdField = document.getElementById("signupPassword");
+        if (pwdField && !document.querySelector(".password-strength")) {
+            const strDiv = document.createElement("div");
+            strDiv.className = "password-strength";
+            strDiv.innerHTML = `<div class="strength-bar"><div class="strength-fill"></div></div><div class="strength-text"></div>`;
+            pwdField.parentNode.insertBefore(strDiv, pwdField.nextSibling);
+        }
+    }
+
+    // ========== حساب تجريبي (مفعّل تلقائياً) ==========
+    window.createDemoAccount = async function() {
+        showLoading(true);
+        const demoEmail = "demo@tafawok.com";
+        const demoUsername = "demo";
+        const demoPass = "Demo123456";
+        const demoGrade = "prep1";
+        try {
+            const existingAuth = await auth.fetchSignInMethodsForEmail(demoEmail);
+            if (existingAuth.length > 0) {
+                showCustomAlert("info", "موجود", "الحساب التجريبي موجود بالفعل، يمكنك تسجيل الدخول باستخدام demo@tafawok.com / Demo123456");
+                showLoading(false);
+                return;
+            }
+            const userCred = await auth.createUserWithEmailAndPassword(demoEmail, demoPass);
+            const uid = userCred.user.uid;
+            await db.collection("users").doc(uid).set({
+                uid: uid,
+                name: "حساب تجريبي شامل",
+                username: demoUsername,
+                email: demoEmail,
+                grade: demoGrade,
+                role: "user",
+                isActivated: true,
+                registeredAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            await auth.signOut();
+            showCustomAlert("success", "تم الإنشاء", `✅ حساب تجريبي جاهز!\nالبريد: ${demoEmail}\nاسم المستخدم: ${demoUsername}\nكلمة المرور: ${demoPass}\nالصف: أولى إعدادي\nيمكنك الآن تسجيل الدخول مباشرة.`);
+        } catch (err) {
+            console.error(err);
+            showCustomAlert("error", "خطأ", "فشل إنشاء الحساب التجريبي: " + err.message);
+        } finally {
+            showLoading(false);
+        }
+    };
+
+    window.showAccountHint = function() {
+        showCustomAlert("info", "تلميح", "تأكد من كتابة البريد الإلكتروني وكلمة المرور بشكل صحيح. الآن جميع الحسابات (حتى غير المفعلة) يمكنها تسجيل الدخول مباشرة. ملاحظة: للمدير الخاص توجيه خاص إلى صفحة الإدارة.");
+    };
+
+    async function checkAndSetupDebug() {
+        try {
+            const snapshot = await db.collection("users").limit(1).get();
+            const debugDiv = document.getElementById("debugArea");
+            if (snapshot.empty) {
+                debugDiv.innerHTML = `<div class="debug-btn" onclick="createDemoAccount()">🚀 لا يوجد مستخدمون، اضغط لإنشاء حساب تجريبي (demo@tafawok.com / Demo123456)</div>`;
+            } else {
+                debugDiv.innerHTML = `<div class="debug-btn" onclick="showAccountHint()">🔍 تلميح: أي حساب مسجل يمكنه الدخول فوراً (حتى لو غير مفعّل). المدير الخاص: oh624762@gmail.com</div>`;
+            }
+        } catch (err) {
+            document.getElementById("debugArea").innerHTML = `<div class="debug-btn" style="background:#e74c3c33; color:#c0392b;">⚠️ فشل الاتصال بقاعدة البيانات: تحقق من قواعد Firestore</div>`;
+        }
+    }
+
+    // ========== تهيئة الصفحة ==========
+    document.addEventListener("DOMContentLoaded", async () => {
+        addValidationMessages();
+        const pwdField = document.getElementById('signupPassword');
+        if (pwdField) {
+            pwdField.addEventListener('input', () => { validateSignupPassword(); checkPasswordMatch(); updatePasswordStrength(); });
+        }
+        document.getElementById('confirmPassword')?.addEventListener('input', checkPasswordMatch);
+        document.getElementById('fullName')?.addEventListener('input', validateFullName);
+        document.getElementById('signupGrade')?.addEventListener('change', validateSignupGrade);
+        document.getElementById('loginForm').addEventListener('submit', handleLogin);
+        document.getElementById('signupForm').addEventListener('submit', handleSignup);
+
+        await checkAndSetupDebug();
+    });
+</script>
+</body>
+</html>

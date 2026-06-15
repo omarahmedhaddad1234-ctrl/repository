@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة إدارة الأكواد</title>
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+}
+body{
+background:#0f172a;
+color:white;
+padding:20px;
+}
+.container{
+max-width:1400px;
+margin:auto;
+}
+.header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:20px;
+flex-wrap:wrap;
+gap:15px;
+}
+.stats{
+display:flex;
+gap:15px;
+margin-bottom:20px;
+flex-wrap:wrap;
+}
+.stat{
+background:#1e293b;
+padding:20px;
+border-radius:12px;
+min-width:180px;
+text-align:center;
+}
+.card{
+background:#1e293b;
+padding:20px;
+border-radius:12px;
+margin-bottom:20px;
+}
+button{
+border:none;
+padding:10px 15px;
+border-radius:8px;
+cursor:pointer;
+font-weight:bold;
+}
+.generate{
+background:#22c55e;
+color:white;
+}
+.delete{
+background:#ef4444;
+color:white;
+}
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:15px;
+overflow-x:auto;
+display:block;
+}
+th,td{
+padding:12px;
+border-bottom:1px solid #334155;
+text-align:center;
+}
+th{
+background:#111827;
+}
+.search{
+width:100%;
+padding:12px;
+border:none;
+border-radius:8px;
+margin-top:15px;
+}
+.used{
+color:#ef4444;
+}
+.unused{
+color:#22c55e;
+}
+@media (max-width:700px){
+th,td{font-size:0.8rem;padding:8px;}
+.header{flex-direction:column;align-items:stretch;}
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<div class="header">
+<h1>لوحة إدارة أكواد التفعيل</h1>
+<button class="generate" onclick="generateCode()">إنشاء كود جديد</button>
+</div>
+
+<div class="stats">
+<div class="stat"><h3 id="totalCodes">0</h3><p>إجمالي الأكواد</p></div>
+<div class="stat"><h3 id="usedCodesCount">0</h3><p>تم استخدامها</p></div>
+<div class="stat"><h3 id="unusedCodesCount">0</h3><p>غير مستخدمة</p></div>
+</div>
+
+<div class="card">
+<h2>بحث</h2>
+<input type="text" id="searchInput" class="search" placeholder="ابحث بالكود أو الإيميل..." oninput="loadCodes()">
+</div>
+
+<div class="card">
+<h2 class="unused">الأكواد غير المستخدمة</h2>
+<div style="overflow-x:auto;">
+<table>
+<thead><tr><th>الكود</th><th>تاريخ الإنشاء</th><th>حذف</th></tr></thead>
+<tbody id="unusedTable"></tbody>
+</table>
+</div>
+</div>
+
+<div class="card">
+<h2 class="used">الأكواد المستخدمة</h2>
+<div style="overflow-x:auto;">
+<table>
+<thead><tr><th>الكود</th><th>الإيميل</th><th>تاريخ الاستخدام</th><th>حذف</th></tr></thead>
+<tbody id="usedTable"></tbody>
+</table>
+</div>
+</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+import {
+getFirestore,
+collection,
+addDoc,
+deleteDoc,
+doc,
+serverTimestamp,
+onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+// === التحقق من جلسة المدير ===
+if (!sessionStorage.getItem("adminLoggedIn") || sessionStorage.getItem("adminEmail") !== "oh624762@gmail.com") {
+    window.location.href = "../index.html";
+}
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDQ8LFihzOPueW0_FCgRF6uEiAMgn24sF8",
+  authDomain: "nemo-8d0c7.firebaseapp.com",
+  projectId: "nemo-8d0c7",
+  storageBucket: "nemo-8d0c7.firebasestorage.app",
+  messagingSenderId: "585101385202",
+  appId: "1:585101385202:web:fb703a536893fb4aaadf6b"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const usedTable = document.getElementById("usedTable");
+const unusedTable = document.getElementById("unusedTable");
+
+function randomPart() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let result = "";
+  for (let i = 0; i < 4; i++) result += chars[Math.floor(Math.random() * chars.length)];
+  return result;
+}
+
+function createCode() {
+  return randomPart() + "-" + randomPart() + "-" + randomPart();
+}
+
+window.generateCode = async () => {
+  try {
+    const code = createCode();
+    await addDoc(collection(db, "activation_codes"), {
+      code: code,
+      used: false,
+      usedBy: null,
+      createdAt: serverTimestamp(),
+      usedAt: null
+    });
+    alert("تم إنشاء الكود بنجاح");
+  } catch (err) {
+    console.error(err);
+    alert("حدث خطأ أثناء إنشاء الكود");
+  }
+};
+
+window.deleteCode = async (id) => {
+  if (!confirm("هل تريد حذف هذا الكود نهائياً؟")) return;
+  try {
+    await deleteDoc(doc(db, "activation_codes", id));
+  } catch (err) {
+    console.error(err);
+    alert("فشل الحذف");
+  }
+};
+
+function loadCodes() {
+  onSnapshot(collection(db, "activation_codes"), (snapshot) => {
+    usedTable.innerHTML = "";
+    unusedTable.innerHTML = "";
+    let total = 0, usedCount = 0, unusedCount = 0;
+    const search = document.getElementById("searchInput").value.toLowerCase();
+
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      const code = (data.code || "").toLowerCase();
+      const email = (data.usedBy || "").toLowerCase();
+      if (!code.includes(search) && !email.includes(search)) return;
+      total++;
+
+      if (data.used) {
+        usedCount++;
+        usedTable.innerHTML += `
+          <tr>
+            <td>${data.code}</td>
+            <td>${data.usedBy || "-"}</td>
+            <td>${data.usedAt?.toDate ? data.usedAt.toDate().toLocaleString() : "-"}</td>
+            <td><button class="delete" onclick="deleteCode('${docSnap.id}')">حذف</button></td>
+          </tr>
+        `;
+      } else {
+        unusedCount++;
+        unusedTable.innerHTML += `
+          <tr>
+            <td>${data.code}</td>
+            <td>${data.createdAt?.toDate ? data.createdAt.toDate().toLocaleString() : "-"}</td>
+            <td><button class="delete" onclick="deleteCode('${docSnap.id}')">حذف</button></td>
+          </tr>
+        `;
+      }
+    });
+
+    document.getElementById("totalCodes").innerText = total;
+    document.getElementById("usedCodesCount").innerText = usedCount;
+    document.getElementById("unusedCodesCount").innerText = unusedCount;
+  });
+}
+
+loadCodes();
+</script>
+</body>
+</html>

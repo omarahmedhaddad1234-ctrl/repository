@@ -412,19 +412,22 @@
         }
 
         // حالة خاصة: حساب المدير الخارق
-        if (email === SUPER_ADMIN_EMAIL) {
-            await auth.signInWithEmailAndPassword(email, password);
-            showCustomAlert(
-                "success",
-                "مرحباً أيها المدير 👑",
-                "تم تسجيل الدخول بنجاح",
-                () => {
-                    window.location.href = "admain/admain.html";
-                }
-            );
-            return;
-        }
+    if (email === SUPER_ADMIN_EMAIL) {
+    await auth.signInWithEmailAndPassword(email, password);
 
+    sessionStorage.setItem("adminLoggedIn", "true");
+    sessionStorage.setItem("adminEmail", email);
+
+    showCustomAlert(
+        "success",
+        "مرحباً أيها المدير 👑",
+        "تم تسجيل الدخول بنجاح",
+        () => {
+            window.location.href = "admain/admain.html";
+        }
+    );
+    return;
+}
         // المسار العادي: باقي المستخدمين (Firebase Auth + Firestore)
         showLoading(true);
         try {

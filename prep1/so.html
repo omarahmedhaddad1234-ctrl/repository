@@ -237,7 +237,7 @@
         payButton.addEventListener('click', () => {
             let email = auth.currentUser?.email;
             if (!email) email = prompt("📧 بريدك الإلكتروني لإرساله للمدرس (لشراء كود Social):");
-            if (email) window.open(`https://wa.me/01211493385?text=${encodeURIComponent(`اريد شراء كود تفعيل لمادة Social (دراسات اجتماعية)\nالايميل: ${email}`)}`, '_blank');
+            if (email) window.open(`https://wa.me/201211493385?text=${encodeURIComponent(`اريد شراء كود تفعيل لمادة Social (دراسات اجتماعية)\nالايميل: ${email}`)}`, '_blank');
         });
 
         auth.onAuthStateChanged(async (user) => {

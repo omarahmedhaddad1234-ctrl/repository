@@ -34,6 +34,8 @@
                 <button data-tab="exercises" class="tab-btn px-6 py-2 rounded-lg font-medium"><i class="fas fa-pen-fancy mr-2"></i> التدريبات</button>
                 <button data-tab="exams" class="tab-btn px-6 py-2 rounded-lg font-medium"><i class="fas fa-clipboard-list mr-2"></i> الامتحانات</button>
                 <button data-tab="files" class="tab-btn px-6 py-2 rounded-lg font-medium"><i class="fas fa-file-pdf mr-2"></i> الملفات</button>
+                <!-- ✅ زر الواجبات – سيوجه إلى submit.html -->
+                <button data-tab="assignments" class="tab-btn px-6 py-2 rounded-lg font-medium"><i class="fas fa-file-pdf mr-2"></i> الواجبات</button>
             </div>
         </div>
     </nav>
@@ -86,6 +88,7 @@
         const submitCodeBtn = document.getElementById('submitCodeBtn');
         const payButtonContainer = document.getElementById('payButtonContainer');
 
+        // ✅ تعريف الميتا للأقسام المعتادة (بدون الواجبات)
         const tabMeta = {
             lessons: { type: "lesson", title: "محاضرات كورس البرمجة", icon: "fa-video", color: "text-red-600", btnText: "تشغيل الفيديو", btnIcon: "fa-play-circle" },
             exercises: { type: "exercise", title: "التدريبات البرمجية", icon: "fa-pen-fancy", color: "text-blue-600", btnText: "تحميل التدريب", btnIcon: "fa-download" },
@@ -93,18 +96,31 @@
             files: { type: "file", title: "الملخصات والمذكرات", icon: "fa-file-pdf", color: "text-purple-600", btnText: "تحميل المذكرة", btnIcon: "fa-download" }
         };
 
+        // ✅ معالج النقر على التبويبات
         tabBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 const target = btn.getAttribute('data-tab');
+
+                // ➡️ إذا كان التبويب هو "assignments" ننقل المستخدم إلى submit.html
+                if (target === 'assignments') {
+                    window.location.href = 'submit.html';
+                    return;
+                }
+
+                // ➡️ بخلاف ذلك، نتعامل مع الأقسام الأخرى (شروحات، تدريبات، إلخ)
                 tabBtns.forEach(b => b.classList.remove('active-tab'));
                 btn.classList.add('active-tab');
+
                 const meta = tabMeta[target];
+                if (!meta) return; // أمان
+
                 currentTab = meta.type;
                 sectionTitle.innerHTML = `<i class="fas ${meta.icon} mr-2 ${meta.color}"></i> ${meta.title}`;
                 loadSubjectContent();
             });
         });
 
+        // دوال التحميل والعرض (نفس الكود الأصلي)
         function formatVideoUrl(url) {
             if (!url) return '';
             if (url.includes('youtube.com/watch?v=')) return url.replace('watch?v=', 'embed/');
@@ -213,7 +229,7 @@
         payButton.addEventListener('click', () => {
             let email = auth.currentUser?.email;
             if (!email) email = prompt("📧 بريدك الإلكتروني لإرساله للمدرس:");
-            if (email) window.open(`https://wa.me/201211493385?text=${encodeURIComponent(`اريد شراء كود تفعيل - كورس البرمجة\nالايميل: ${email}`)}`, '_blank');
+            if (email) window.open(`https://wa.me/01211493385?text=${encodeURIComponent(`اريد شراء كود تفعيل - كورس البرمجة\nالايميل: ${email}`)}`, '_blank');
         });
 
         auth.onAuthStateChanged(async (user) => {

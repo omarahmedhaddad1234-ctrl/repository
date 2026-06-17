@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مراجعة التسليمات - الأدمن | Nemo</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { font-family: 'Tajawal', sans-serif; background: #f3f4f6; }
+        .submission-card { transition: 0.2s; }
+        .submission-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .status-badge { padding: 4px 14px; border-radius: 9999px; font-size: 0.75rem; font-weight: bold; }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-accepted { background: #d1fae5; color: #065f46; }
+        .status-rejected { background: #fee2e2; color: #991b1b; }
+        .modal-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+        .spinner { animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .pagination-btn { transition: 0.2s; }
+        .pagination-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <header class="bg-gray-900 text-white py-4 shadow-lg">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div class="text-xl font-bold">Nemo | مراجعة التسليمات</div>
+            <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm"><i class="fas fa-sign-out-alt ml-2"></i>تسجيل خروج</button>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 max-w-6xl">
+
+        <!-- فلترة سريعة -->
+        <div class="bg-white rounded-2xl shadow-sm p-4 mb-8 flex flex-wrap items-center gap-4 border border-gray-100">
+            <span class="font-semibold text-gray-700"><i class="fas fa-filter ml-2 text-indigo-500"></i>حالة التسليم:</span>
+            <button data-filter="all" class="filter-btn active px-4 py-1.5 rounded-full border border-gray-300 text-sm hover:bg-gray-100 transition bg-indigo-600 text-white">الكل</button>
+            <button data-filter="pending" class="filter-btn px-4 py-1.5 rounded-full border border-gray-300 text-sm hover:bg-gray-100 transition">قيد المراجعة</button>
+            <button data-filter="accepted" class="filter-btn px-4 py-1.5 rounded-full border border-gray-300 text-sm hover:bg-gray-100 transition">مقبول</button>
+            <button data-filter="rejected" class="filter-btn px-4 py-1.5 rounded-full border border-gray-300 text-sm hover:bg-gray-100 transition">مرفوض</button>
+        </div>
+
+        <!-- قائمة التسليمات -->
+        <div id="submissionsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="col-span-full text-center text-gray-400 py-12">
+                <i class="fas fa-spinner spinner text-3xl text-indigo-500"></i>
+                <p class="mt-2">جاري تحميل التسليمات...</p>
+            </div>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="flex justify-between items-center mt-6 bg-white p-4 rounded-xl shadow-sm">
+            <button id="prevPageBtn" class="pagination-btn bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg transition disabled:opacity-50" disabled><i class="fas fa-chevron-right ml-2"></i>السابق</button>
+            <span id="pageInfo" class="text-gray-600">الصفحة 1</span>
+            <button id="nextPageBtn" class="pagination-btn bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg transition"><i class="fas fa-chevron-left mr-2"></i>التالي</button>
+        </div>
+
+        <!-- مودال مراجعة التفاصيل -->
+        <div id="reviewModal" class="fixed inset-0 flex items-center justify-center modal-overlay hidden z-50 p-4">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 relative">
+                <button id="closeModalBtn" class="absolute top-3 left-3 text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+                <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2"><i class="fas fa-clipboard-check ml-2 text-indigo-600"></i>مراجعة التسليم</h3>
+                <div id="modalContent" class="space-y-3">
+                    <!-- سيتم ملؤها بواسطة JS -->
+                </div>
+                <div class="mt-4 flex flex-wrap gap-3">
+                    <button id="acceptBtn" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg transition"><i class="fas fa-check ml-2"></i>قبول</button>
+                    <button id="rejectBtn" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg transition"><i class="fas fa-times ml-2"></i>رفض</button>
+                    <button id="closeReviewBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-5 py-2 rounded-lg transition">إغلاق</button>
+                </div>
+                <div id="reviewMessage" class="mt-3 hidden text-center text-sm font-semibold"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDQ8LFihzOPueW0_FCgRF6uEiAMgn24sF8",
+            authDomain: "nemo-8d0c7.firebaseapp.com",
+            projectId: "nemo-8d0c7",
+            storageBucket: "nemo-8d0c7.firebasestorage.app",
+            messagingSenderId: "585101385202",
+            appId: "1:585101385202:web:fb703a536893fb4aaadf6b"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // عناصر DOM
+        const container = document.getElementById('submissionsContainer');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const modal = document.getElementById('reviewModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const closeReviewBtn = document.getElementById('closeReviewBtn');
+        const modalContent = document.getElementById('modalContent');
+        const acceptBtn = document.getElementById('acceptBtn');
+        const rejectBtn = document.getElementById('rejectBtn');
+        const reviewMessage = document.getElementById('reviewMessage');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const prevPageBtn = document.getElementById('prevPageBtn');
+        const nextPageBtn = document.getElementById('nextPageBtn');
+        const pageInfo = document.getElementById('pageInfo');
+
+        let allSubmissions = [];
+        let currentFilter = 'all';
+        let currentPage = 0;
+        const PAGE_SIZE = 20;
+        let lastDoc = null;
+        let firstDoc = null;
+        let hasNextPage = false;
+
+        // دوال مساعدة
+        function formatDate(timestamp) {
+            if (!timestamp) return 'غير محدد';
+            const d = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            return d.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function getSubjectLabel(subject) {
+            const map = { arabic: 'عربي', english: 'إنجليزي', math: 'رياضيات', science: 'علوم', social: 'دراسات', programming: 'برمجة' };
+            return map[subject] || subject;
+        }
+
+        function getGradeLabel(grade) {
+            const map = { prep1: 'الأول الإعدادي', prep2: 'الثاني الإعدادي', prep3: 'الثالث الإعدادي', course: 'كورس البرمجة' };
+            return map[grade] || grade;
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m));
+        }
+
+        // عرض التسليمات
+        function renderSubmissions(subs) {
+            if (!subs || !subs.length) {
+                container.innerHTML = `<div class="col-span-full text-center text-gray-400 py-12">📭 لا توجد تسليمات بهذه الحالة</div>`;
+                return;
+            }
+
+            let html = '';
+            subs.forEach(sub => {
+                const statusBadge = sub.status === 'pending' ? 'status-pending' :
+                                   sub.status === 'accepted' ? 'status-accepted' : 'status-rejected';
+                const statusLabel = sub.status === 'pending' ? '⏳ قيد المراجعة' :
+                                   sub.status === 'accepted' ? '✅ مقبول' : '❌ مرفوض';
+
+                const driveLink = sub.driveLink ? escapeHtml(sub.driveLink) : '#';
+
+                html += `
+                    <div class="submission-card bg-white rounded-xl shadow-md p-5 border border-gray-100">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-bold text-gray-800">${escapeHtml(sub.taskTitle || 'بدون عنوان')}</h4>
+                                <div class="text-sm text-gray-500 flex flex-wrap gap-3 mt-1">
+                                    <span><i class="fas fa-user ml-1"></i>${escapeHtml(sub.studentName || 'طالب')}</span>
+                                    <span><i class="fas fa-graduation-cap ml-1"></i>${getGradeLabel(sub.grade)}</span>
+                                    <span><i class="fas fa-book ml-1"></i>${getSubjectLabel(sub.subject)}</span>
+                                </div>
+                            </div>
+                            <span class="status-badge ${statusBadge}">${statusLabel}</span>
+                        </div>
+                        <div class="mt-3 text-sm">
+                            ${driveLink !== '#' ? `<p><i class="fas fa-link ml-1 text-blue-500"></i> <a href="${driveLink}" target="_blank" class="text-blue-600 hover:underline">فتح الرابط</a></p>` : '<p class="text-gray-400">لا يوجد رابط</p>'}
+                            <p class="text-gray-400 text-xs mt-1">تم التسليم: ${formatDate(sub.createdAt)}</p>
+                            ${sub.teacherNote ? `<p class="text-sm text-gray-600 mt-1"><span class="font-semibold">ملاحظة المعلم:</span> ${escapeHtml(sub.teacherNote)}</p>` : ''}
+                        </div>
+                        <div class="mt-4 flex justify-end">
+                            <button onclick="openReviewModal('${sub.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-1.5 rounded-lg transition"><i class="fas fa-search ml-1"></i>مراجعة</button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            pageInfo.textContent = `الصفحة ${currentPage + 1}`;
+            prevPageBtn.disabled = currentPage === 0;
+        }
+
+        // تحميل البيانات مع pagination
+        async function loadSubmissionsPaginated(direction = 'next') {
+            try {
+                let query = db.collection('submissions')
+                    .orderBy('createdAt', 'desc')
+                    .limit(PAGE_SIZE);
+
+                if (direction === 'next' && lastDoc) {
+                    query = query.startAfter(lastDoc);
+                } else if (direction === 'prev' && firstDoc) {
+                    query = query.endBefore(firstDoc).limitToLast(PAGE_SIZE);
+                }
+
+                const snap = await query.get();
+                if (snap.empty) {
+                    if (direction === 'next') {
+                        hasNextPage = false;
+                    }
+                    return;
+                }
+
+                const subs = [];
+                snap.forEach(doc => subs.push({ id: doc.id, ...doc.data() }));
+
+                if (direction === 'next') {
+                    firstDoc = snap.docs[0] || null;
+                    lastDoc = snap.docs[snap.docs.length - 1] || null;
+                    if (snap.docs.length === PAGE_SIZE) {
+                        const nextQuery = db.collection('submissions')
+                            .orderBy('createdAt', 'desc')
+                            .startAfter(lastDoc)
+                            .limit(1);
+                        const nextSnap = await nextQuery.get();
+                        hasNextPage = !nextSnap.empty;
+                    } else {
+                        hasNextPage = false;
+                    }
+                } else if (direction === 'prev') {
+                    subs.reverse();
+                    lastDoc = snap.docs[snap.docs.length - 1] || null;
+                    firstDoc = snap.docs[0] || null;
+                    hasNextPage = true;
+                }
+
+                let filteredSubs = subs;
+                if (currentFilter !== 'all') {
+                    filteredSubs = subs.filter(s => s.status === currentFilter);
+                    if (!filteredSubs.length) {
+                        container.innerHTML = `<div class="col-span-full text-center text-gray-400 py-12">📭 لا توجد تسليمات بهذه الحالة</div>`;
+                        return;
+                    }
+                }
+
+                allSubmissions = filteredSubs;
+                renderSubmissions(filteredSubs);
+                nextPageBtn.disabled = !hasNextPage;
+
+            } catch (err) {
+                console.error('خطأ في تحميل التسليمات:', err);
+                container.innerHTML = `<div class="col-span-full text-center text-red-500 py-12">حدث خطأ في تحميل البيانات</div>`;
+            }
+        }
+
+        // تغيير الصفحة
+        async function goToPage(direction) {
+            if (direction === 'next' && !hasNextPage) return;
+            if (direction === 'prev' && currentPage === 0) return;
+
+            if (direction === 'next') {
+                currentPage++;
+                await loadSubmissionsPaginated('next');
+            } else if (direction === 'prev') {
+                currentPage--;
+                await loadSubmissionsPaginated('prev');
+            }
+        }
+
+        // فتح المودال
+        function openReviewModal(subId) {
+            const sub = allSubmissions.find(s => s.id === subId);
+            if (!sub) return;
+            window.currentSubId = subId;
+
+            modalContent.innerHTML = `
+                <div><strong>الواجب:</strong> ${escapeHtml(sub.taskTitle)}</div>
+                <div><strong>الطالب:</strong> ${escapeHtml(sub.studentName)}</div>
+                <div><strong>الصف:</strong> ${getGradeLabel(sub.grade)}</div>
+                <div><strong>المادة:</strong> ${getSubjectLabel(sub.subject)}</div>
+                <div><strong>حالة التسليم:</strong> ${sub.status}</div>
+                <div><strong>الرابط:</strong> ${sub.driveLink ? `<a href="${escapeHtml(sub.driveLink)}" target="_blank" class="text-blue-600 hover:underline">${escapeHtml(sub.driveLink)}</a>` : 'لا يوجد رابط'}</div>
+                <div><strong>تاريخ التسليم:</strong> ${formatDate(sub.createdAt)}</div>
+                ${sub.teacherNote ? `<div><strong>ملاحظة المعلم:</strong> ${escapeHtml(sub.teacherNote)}</div>` : ''}
+            `;
+            reviewMessage.classList.add('hidden');
+            reviewMessage.textContent = '';
+            modal.classList.remove('hidden');
+        }
+        window.openReviewModal = openReviewModal;
+
+        // إغلاق المودال
+        function closeModal() { modal.classList.add('hidden'); }
+        closeModalBtn.addEventListener('click', closeModal);
+        closeReviewBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+        // قبول التسليم
+        acceptBtn.addEventListener('click', async () => {
+            if (!window.currentSubId) return;
+            try {
+                await db.collection('submissions').doc(window.currentSubId).update({
+                    status: 'accepted',
+                    reviewedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                const sub = allSubmissions.find(s => s.id === window.currentSubId);
+                if (sub) sub.status = 'accepted';
+                renderSubmissions(allSubmissions);
+                showReviewMessage('✅ تم قبول التسليم', 'success');
+                setTimeout(closeModal, 1000);
+            } catch (err) {
+                showReviewMessage('❌ خطأ: ' + err.message, 'error');
+            }
+        });
+
+        // رفض التسليم
+        rejectBtn.addEventListener('click', async () => {
+            if (!window.currentSubId) return;
+            const note = prompt('📝 أضف ملاحظة للطالب (اختياري):');
+            try {
+                const updateData = {
+                    status: 'rejected',
+                    reviewedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                if (note) updateData.teacherNote = note;
+                await db.collection('submissions').doc(window.currentSubId).update(updateData);
+                const sub = allSubmissions.find(s => s.id === window.currentSubId);
+                if (sub) { sub.status = 'rejected'; if (note) sub.teacherNote = note; }
+                renderSubmissions(allSubmissions);
+                showReviewMessage('❌ تم رفض التسليم' + (note ? ' مع ملاحظة' : ''), 'success');
+                setTimeout(closeModal, 1000);
+            } catch (err) {
+                showReviewMessage('❌ خطأ: ' + err.message, 'error');
+            }
+        });
+
+        function showReviewMessage(msg, type) {
+            reviewMessage.classList.remove('hidden');
+            reviewMessage.className = type === 'success' ? 'mt-3 text-green-600' : 'mt-3 text-red-600';
+            reviewMessage.textContent = msg;
+        }
+
+        // فلترة
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => b.classList.remove('active', 'bg-indigo-600', 'text-white'));
+                btn.classList.add('active', 'bg-indigo-600', 'text-white');
+                currentFilter = btn.dataset.filter;
+                currentPage = 0;
+                lastDoc = null;
+                firstDoc = null;
+                hasNextPage = false;
+                loadSubmissionsPaginated('next');
+            });
+        });
+
+        // أزرار التنقل
+        prevPageBtn.addEventListener('click', () => goToPage('prev'));
+        nextPageBtn.addEventListener('click', () => goToPage('next'));
+
+        // مراقبة المصادقة - بدون أي تحقق من role
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                alert('يرجى تسجيل الدخول أولاً');
+                window.location.href = '../login.html';
+                return;
+            }
+            await loadSubmissionsPaginated('next');
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            auth.signOut().then(() => window.location.href = '../login.html');
+        });
+
+        console.log('✅ Admin Review Page (role check removed) loaded.');
+    </script>
+</body>
+</html>

@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>📚 لوحة الطالب - Nemo (الصف الثاني)</title>
+
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <!-- Google Font (Tajawal) -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet" />
+
+    <!-- Firebase SDK compat (v9 compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js">
+    </script>
+
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: #f4f7fc;
+        }
+        /* تنسيق البطاقات */
+        .task-card {
+            transition: all 0.3s ease;
+        }
+        .task-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        }
+        /* شريط التفعيل */
+        .activation-bar {
+            background: #fef9e7;
+            border-right: 6px solid #f1c40f;
+        }
+        /* زر واتساب */
+        .whatsapp-btn {
+            background: #25D366;
+            color: #fff;
+            transition: 0.2s;
+        }
+        .whatsapp-btn:hover {
+            background: #1da851;
+            transform: scale(1.02);
+        }
+        /* تذييل المهام */
+        .status-badge {
+            padding: 4px 16px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .status-badge.active {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-badge.expired {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status-badge.closed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status-badge.pending {
+            background: #cce5ff;
+            color: #004085;
+        }
+        .status-badge.accepted {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-badge.rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        /* الأزرار */
+        .btn-submit {
+            background: #2d6a9f;
+            color: #fff;
+        }
+        .btn-submit:hover {
+            background: #1b4b75;
+        }
+        .btn-resubmit {
+            background: #e67e22;
+            color: #fff;
+        }
+        .btn-resubmit:hover {
+            background: #d35400;
+        }
+        .text-submitted {
+            background: #d5f5e3;
+            color: #1a7a42;
+            padding: 6px 20px;
+            border-radius: 40px;
+        }
+        .text-not-available {
+            background: #ecf0f1;
+            color: #7f8c8d;
+            padding: 6px 20px;
+            border-radius: 40px;
+        }
+        /* مودال التسليم */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.55);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            backdrop-filter: blur(4px);
+        }
+        .modal-overlay.open {
+            display: flex;
+        }
+        .modal-box {
+            background: #fff;
+            padding: 32px 36px;
+            border-radius: 24px;
+            max-width: 480px;
+            width: 92%;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.25s ease;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.96) translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        .modal-box input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid #dce1e8;
+            border-radius: 12px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            direction: ltr;
+        }
+        .modal-box input:focus {
+            outline: none;
+            border-color: #2d6a9f;
+            box-shadow: 0 0 0 3px rgba(45, 106, 159, 0.15);
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        .modal-actions button {
+            padding: 10px 28px;
+            border-radius: 40px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-cancel {
+            background: #ecf0f1;
+            color: #2c3e50;
+        }
+        .btn-cancel:hover {
+            background: #d5dbdf;
+        }
+        .btn-send {
+            background: #2d6a9f;
+            color: #fff;
+        }
+        .btn-send:hover {
+            background: #1b4b75;
+        }
+        /* تذييل ثابت للشراء */
+        .pay-fixed {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+        }
+        /* فلتر */
+        .filter-btn.active {
+            background: #2d6a9f;
+            color: #fff;
+            border-color: #2d6a9f;
+        }
+        .filter-btn {
+            transition: 0.2s;
+        }
+        /* تنسيقات عامة */
+        .no-tasks {
+            text-align: center;
+            padding: 60px 20px;
+            background: #fff;
+            border-radius: 16px;
+            color: #7f8c8d;
+            font-size: 20px;
+        }
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 60vh;
+            font-size: 24px;
+            color: #555;
+        }
+        .login-msg {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 60vh;
+            font-size: 22px;
+            color: #2c3e50;
+            background: #fff;
+            padding: 30px 40px;
+            border-radius: 16px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        /* زر عرض السبب (تحسين) */
+        .show-reason {
+            background: #fee2e2;
+            color: #991b1b;
+            transition: 0.2s;
+        }
+        .show-reason:hover {
+            background: #fecaca;
+        }
+        /* مودال عرض السبب */
+        .reason-modal-box {
+            max-width: 420px;
+        }
+        .reason-text {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 12px;
+            border-right: 4px solid #ef4444;
+            font-size: 16px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== التطبيق ===== -->
+    <div id="app" class="container mx-auto px-4 py-6 max-w-6xl">
+
+        <!-- ===== الهيدر ===== -->
+        <header id="header" class="bg-white shadow-sm rounded-2xl p-4 flex flex-wrap justify-between items-center mb-6" style="display:none;">
+            <div class="flex items-center gap-4">
+                <span class="font-bold text-xl text-gray-800"><i class="fas fa-graduation-cap text-blue-600 ml-2"></i>Nemo</span>
+                <span class="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-full">طالب</span>
+                <span class="text-gray-700" id="studentName">👤 الاسم</span>
+                <span class="text-gray-500 text-sm" id="studentGrade">الصف: --</span>
+            </div>
+            <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-full text-sm font-medium transition"><i class="fas fa-sign-out-alt ml-1"></i> خروج</button>
+        </header>
+
+        <!-- ===== شريط التفعيل ===== -->
+        <div id="activationBar" class="activation-bar rounded-xl p-4 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4" style="display:none;">
+            <div class="flex items-start gap-3">
+                <i class="fas fa-lock text-2xl text-yellow-600 mt-1"></i>
+                <div>
+                    <p class="font-bold text-gray-800">🔒 هذا المحتوى مقفل</p>
+                    <p class="text-gray-600 text-sm">أدخل كود التفعيل الصحيح لفتح جميع محتويات لوحة الطالب.</p>
+                </div>
+            </div>
+            <div class="flex gap-2 w-full md:w-auto">
+                <input type="text" id="activationCodeInput" placeholder="مثال: ABC1-D2E3-FG45" class="flex-1 md:w-60 px-4 py-2 border border-yellow-400 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 text-black" disabled />
+                <button id="submitCodeBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white px-5 py-2 rounded-lg font-bold transition disabled:opacity-50" disabled>تفعيل</button>
+            </div>
+        </div>
+
+        <!-- ===== الفلاتر ===== -->
+        <div id="filtersContainer" class="flex flex-wrap gap-2 mb-6" style="display:none;">
+            <button class="filter-btn active bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium border border-blue-600" data-filter="all">📋 كل المواد</button>
+            <button class="filter-btn bg-white text-gray-700 px-4 py-2 rounded-full text-sm font-medium border border-gray-300 hover:bg-gray-100" data-filter="عربي">🇸🇦 عربي</button>
+            <button class="filter-btn bg-white text-gray-700 px-4 py-2 rounded-full text-sm font-medium border border-gray-300 hover:bg-gray-100" data-filter="إنجليزي">🇬🇧 إنجليزي</button>
+            <button class="filter-btn bg-white text-gray-700 px-4 py-2 rounded-full text-sm font-medium border border-gray-300 hover:bg-gray-100" data-filter="رياضة">⚽ رياضة</button>
+            <button class="filter-btn bg-white text-gray-700 px-4 py-2 rounded-full text-sm font-medium border border-gray-300 hover:bg-gray-100" data-filter="علوم">🔬 علوم</button>
+            <button class="filter-btn bg-white text-gray-700 px-4 py-2 rounded-full text-sm font-medium border border-gray-300 hover:bg-gray-100" data-filter="رياضيات">📐 رياضيات</button>
+        </div>
+
+        <!-- ===== قائمة المهام ===== -->
+        <div id="tasksContainer" style="display:none;">
+            <h2 class="text-xl font-bold mb-4 text-gray-800 border-b pb-2"><i class="fas fa-tasks text-blue-600 ml-2"></i> الواجبات</h2>
+            <div id="tasksList" class="space-y-4"></div>
+        </div>
+
+        <!-- ===== رسائل الحالة ===== -->
+        <div id="loadingScreen" class="loading-spinner">⏳ جاري تحميل البيانات...</div>
+        <div id="loginMessage" class="login-msg" style="display:none;">
+            <i class="fas fa-sign-in-alt text-3xl text-blue-500 ml-4"></i>
+            <span>🔒 يرجى تسجيل الدخول للوصول إلى لوحة الطالب</span>
+        </div>
+
+        <!-- ===== زر شراء الكود عبر واتساب ===== -->
+        <div id="payButtonContainer" class="pay-fixed" style="display:none;">
+            <button id="payButton" class="whatsapp-btn font-bold py-3 px-8 rounded-full shadow-lg flex items-center gap-2 text-lg">
+                <i class="fab fa-whatsapp text-xl"></i> شراء كود التفعيل عبر واتساب
+            </button>
+        </div>
+
+        <!-- ===== مودال التسليم ===== -->
+        <div id="submissionModal" class="modal-overlay">
+            <div class="modal-box">
+                <h2 class="text-2xl font-bold mb-1"><i class="fas fa-paper-plane text-blue-600 ml-2"></i> تسليم الواجب</h2>
+                <p class="text-gray-600 text-lg mb-4" id="modalTaskTitle">اسم الواجب</p>
+                <form id="submitForm">
+                    <label class="block font-semibold text-gray-700 mb-1" for="driveLink">🔗 رابط Google Drive:</label>
+                    <input type="url" id="driveLink" placeholder="https://drive.google.com/..." required />
+                    <div class="modal-actions">
+                        <button type="button" class="btn-cancel" id="modalCancel">إلغاء</button>
+                        <button type="submit" class="btn-send" id="modalSend">📨 إرسال</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ===== مودال عرض سبب الرفض ===== -->
+        <div id="reasonModal" class="modal-overlay">
+            <div class="modal-box reason-modal-box">
+                <h2 class="text-2xl font-bold mb-2 text-red-600"><i class="fas fa-info-circle ml-2"></i> سبب الرفض</h2>
+                <div id="reasonText" class="reason-text">📝 الملاحظة هنا</div>
+                <div class="modal-actions mt-4">
+                    <button id="closeReasonBtn" class="btn-cancel">فهمت</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ================================================================
+        //  1.  إعداد FIREBASE
+        // ================================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDQ8LFihzOPueW0_FCgRF6uEiAMgn24sF8",
+            authDomain: "nemo-8d0c7.firebaseapp.com",
+            projectId: "nemo-8d0c7",
+            storageBucket: "nemo-8d0c7.firebasestorage.app",
+            messagingSenderId: "585101385202",
+            appId: "1:585101385202:web:fb703a536893fb4aaadf6b"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // ================================================================
+        //  2.  المتغيرات العامة
+        // ================================================================
+        let currentUser = null;
+        let studentData = null;
+        let allTasks = [];
+        let allSubmissions = [];
+        let currentFilter = 'all';
+        let selectedTaskId = null;
+
+        // ================================================================
+        //  3.  مراجع DOM
+        // ================================================================
+        const $ = id => document.getElementById(id);
+
+        const header = $('header');
+        const studentName = $('studentName');
+        const studentGrade = $('studentGrade');
+        const logoutBtn = $('logoutBtn');
+
+        const activationBar = $('activationBar');
+        const activationCodeInput = $('activationCodeInput');
+        const submitCodeBtn = $('submitCodeBtn');
+        const payButtonContainer = $('payButtonContainer');
+        const payButton = $('payButton');
+
+        const filtersContainer = $('filtersContainer');
+        const tasksContainer = $('tasksContainer');
+        const tasksList = $('tasksList');
+
+        const loadingScreen = $('loadingScreen');
+        const loginMessage = $('loginMessage');
+
+        const modalOverlay = $('submissionModal');
+        const modalTaskTitle = $('modalTaskTitle');
+        const driveLinkInput = $('driveLink');
+        const modalCancel = $('modalCancel');
+        const submitForm = $('submitForm');
+
+        const reasonModal = $('reasonModal');
+        const reasonText = $('reasonText');
+        const closeReasonBtn = $('closeReasonBtn');
+
+        // ================================================================
+        //  4.  دوال مساعدة
+        // ================================================================
+        function formatDate(date) {
+            if (!date) return '--';
+            if (date?.toDate) date = date.toDate();
+            if (typeof date === 'string') date = new Date(date);
+            return date.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        function isDeadlinePassed(deadline) {
+            if (!deadline) return false;
+            let d = deadline;
+            if (d.toDate) d = d.toDate();
+            return new Date() > d;
+        }
+
+        function getWhatsAppLink(phone, message) {
+            const fullPhone = '20' + phone.replace(/^0+/, '');
+            return `https://wa.me/${fullPhone}?text=${encodeURIComponent(message)}`;
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/["&<>]/g, function(m) {
+                switch (m) {
+                    case '"': return '&quot;';
+                    case '&': return '&amp;';
+                    case '<': return '&lt;';
+                    case '>': return '&gt;';
+                    default: return m;
+                }
+            });
+        }
+
+        // ================================================================
+        //  5.  عرض المهام (البطاقات) – مع زر السبب المحسن
+        // ================================================================
+        function renderTasks() {
+            let filtered = allTasks;
+            if (currentFilter !== 'all') {
+                filtered = allTasks.filter(task => task.subjectId === currentFilter);
+            }
+
+            if (filtered.length === 0) {
+                tasksList.innerHTML = `<div class="no-tasks">📭 لا توجد مهام لعرضها</div>`;
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(task => {
+                const submission = allSubmissions.find(s => s.taskId === task.id);
+
+                let statusText = '',
+                    statusClass = '',
+                    actionHtml = '';
+                const isClosed = (task.status === 'closed');
+                const isExpired = isDeadlinePassed(task.deadline);
+
+                if (isClosed) {
+                    statusText = '🔴 مقفل';
+                    statusClass = 'closed';
+                    actionHtml = `<span class="text-not-available">🚫 غير متاح</span>`;
+                } else if (submission) {
+                    switch (submission.status) {
+                        case 'pending':
+                            statusText = '⏳ قيد المراجعة';
+                            statusClass = 'pending';
+                            actionHtml = `<span class="text-submitted">✅ تم التسليم</span>`;
+                            break;
+                        case 'accepted':
+                            statusText = '✅ مقبول';
+                            statusClass = 'accepted';
+                            actionHtml = `<span class="text-submitted">✅ تم التسليم</span>`;
+                            break;
+                        case 'rejected':
+                            statusText = '❌ مرفوض';
+                            statusClass = 'rejected';
+                            let resubmitBtn = `<button class="btn-resubmit px-4 py-2 rounded-full text-sm font-semibold" data-taskid="${task.id}">🔄 إعادة تسليم</button>`;
+                            let reasonBtn = '';
+                            if (submission.teacherNote) {
+                                const safeNote = escapeHtml(submission.teacherNote);
+                                reasonBtn = `<button class="show-reason px-3 py-1 rounded-full text-sm font-semibold" data-note="${safeNote}">📌 شوف سبب الرفض</button>`;
+                            }
+                            actionHtml = `
+                                <div class="flex flex-col gap-2 items-end">
+                                    ${resubmitBtn}
+                                    ${reasonBtn}
+                                </div>
+                            `;
+                            break;
+                        default:
+                            statusText = '⏳ قيد المراجعة';
+                            statusClass = 'pending';
+                            actionHtml = `<span class="text-submitted">✅ تم التسليم</span>`;
+                    }
+                } else {
+                    if (isExpired) {
+                        statusText = '🟡 منتهي';
+                        statusClass = 'expired';
+                        actionHtml = `<span class="text-not-available">⏰ منتهي</span>`;
+                    } else {
+                        statusText = '🟢 متاح';
+                        statusClass = 'active';
+                        actionHtml =
+                            `<button class="btn-submit px-4 py-2 rounded-full text-sm font-semibold" data-taskid="${task.id}">📤 تسليم</button>`;
+                    }
+                }
+
+                html += `
+                        <div class="task-card bg-white rounded-2xl p-5 shadow-sm border-r-4 border-blue-600">
+                            <div class="font-bold text-xl">${task.title || 'بدون عنوان'}</div>
+                            <div class="text-blue-600 font-semibold">📚 ${task.subjectId || 'مادة غير محددة'}</div>
+                            <div class="flex flex-wrap gap-3 text-sm text-gray-600 mt-1">
+                                <span>🏫 الصف: ${task.grade || '--'}</span>
+                                <span>⏰ آخر موعد: ${formatDate(task.deadline)}</span>
+                            </div>
+                            <div class="text-gray-700 my-3">${task.description || 'لا يوجد وصف'}</div>
+                            <div class="flex flex-wrap justify-between items-center gap-3 mt-2">
+                                <span class="status-badge ${statusClass}">${statusText}</span>
+                                <div>${actionHtml}</div>
+                            </div>
+                        </div>
+                    `;
+            });
+
+            tasksList.innerHTML = html;
+
+            document.querySelectorAll('.btn-submit, .btn-resubmit, .show-reason').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+
+                    if (this.classList.contains('show-reason')) {
+                        const note = this.dataset.note;
+                        reasonText.textContent = note || 'لا توجد ملاحظة';
+                        reasonModal.classList.add('open');
+                        return;
+                    }
+
+                    const taskId = this.dataset.taskid;
+                    if (taskId) {
+                        openModal(taskId);
+                    }
+                });
+            });
+        }
+
+        // ================================================================
+        //  6.  مودال التسليم
+        // ================================================================
+        function openModal(taskId) {
+            const task = allTasks.find(t => t.id === taskId);
+            if (!task) { alert('الواجب غير موجود!'); return; }
+            selectedTaskId = taskId;
+            modalTaskTitle.textContent = `📌 ${task.title}`;
+            driveLinkInput.value = '';
+            modalOverlay.classList.add('open');
+            driveLinkInput.focus();
+        }
+
+        function closeModal() {
+            modalOverlay.classList.remove('open');
+            selectedTaskId = null;
+        }
+
+        submitForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const link = driveLinkInput.value.trim();
+            if (!link) { alert('⚠️ يرجى إدخال رابط Google Drive.'); return; }
+            if (!link.includes('drive.google.com')) { alert('⚠️ الرابط غير صحيح. تأكد من أنه رابط Google Drive صالح.'); return; }
+            if (!selectedTaskId) { alert('حدث خطأ، حاول مجدداً.'); return; }
+
+            const sendBtn = $('modalSend');
+            sendBtn.disabled = true;
+            sendBtn.textContent = '⏳ جاري...';
+
+            try {
+                const task = allTasks.find(t => t.id === selectedTaskId);
+                await db.collection('submissions').add({
+                    taskId: selectedTaskId,
+                    studentId: currentUser.uid,
+                    grade: studentData.grade || '',
+                    subject: task?.subjectId || '',
+                    driveLink: link,
+                    status: 'pending',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                closeModal();
+            } catch (error) {
+                console.error(error);
+                alert('❌ حدث خطأ أثناء التسليم، حاول مجدداً.');
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = '📨 إرسال';
+            }
+        });
+
+        modalCancel.addEventListener('click', closeModal);
+        modalOverlay.addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        function closeReason() {
+            reasonModal.classList.remove('open');
+        }
+        closeReasonBtn.addEventListener('click', closeReason);
+        reasonModal.addEventListener('click', function(e) {
+            if (e.target === this) closeReason();
+        });
+
+        // ================================================================
+        //  7.  الاستماع للتغييرات (Real-time)
+        // ================================================================
+        let unsubTasks = null,
+            unsubSubs = null;
+
+        function listenToTasks() {
+            if (!studentData) return;
+            const q = db.collection('tasks').where('grade', '==', studentData.grade);
+            return q.onSnapshot(snapshot => {
+                allTasks = [];
+                snapshot.forEach(doc => allTasks.push({ id: doc.id, ...doc.data() }));
+                renderTasks();
+            }, error => console.error('خطأ في المهام:', error));
+        }
+
+        function listenToSubmissions() {
+            if (!currentUser) return;
+            const q = db.collection('submissions').where('studentId', '==', currentUser.uid);
+            return q.onSnapshot(snapshot => {
+                allSubmissions = [];
+                snapshot.forEach(doc => allSubmissions.push({ id: doc.id, ...doc.data() }));
+                renderTasks();
+            }, error => console.error('خطأ في التسليمات:', error));
+        }
+
+        // ================================================================
+        //  8.  نظام التفعيل – التحقق من isActivated
+        // ================================================================
+        async function checkUserActivation(uid) {
+            try {
+                const userRef = db.collection('users').doc(uid);
+                const snap = await userRef.get();
+                if (snap.exists && snap.data().isActivated === true) {
+                    studentData = snap.data();
+                    return true;
+                } else {
+                    if (!snap.exists) {
+                        await userRef.set({
+                            name: currentUser.displayName || 'طالب',
+                            grade: 'prep2',
+                            isActivated: false,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                    studentData = snap.exists ? snap.data() : { name: 'طالب', grade: 'prep2', isActivated: false };
+                    return false;
+                }
+            } catch (e) {
+                console.error(e);
+                return false;
+            }
+        }
+
+        submitCodeBtn.addEventListener('click', async () => {
+            const enteredCode = activationCodeInput.value.trim().toUpperCase();
+            if (!enteredCode) return alert("📝 أدخل كود التفعيل");
+            if (!currentUser) return alert("يرجى تسجيل الدخول أولاً");
+
+            try {
+                const codesRef = db.collection('activation_codes');
+                const q = codesRef.where('code', '==', enteredCode).where('used', '==', false).limit(1);
+                const querySnap = await q.get();
+                if (querySnap.empty) {
+                    return alert("❌ كود غير صحيح أو تم استخدامه من قبل");
+                }
+                const codeDoc = querySnap.docs[0];
+                await codeDoc.ref.update({
+                    used: true,
+                    usedBy: currentUser.email || currentUser.uid,
+                    usedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                // تحديث isActivated في users إلى true
+                await db.collection('users').doc(currentUser.uid).set({ isActivated: true }, { merge: true });
+                studentData.isActivated = true;
+                unlockUI();
+                alert("✅ تم تفعيل حسابك بنجاح! يمكنك الآن الوصول للمهام.");
+                activationCodeInput.value = '';
+            } catch (err) {
+                console.error(err);
+                alert("⚠️ حدث خطأ أثناء التفعيل، حاول مرة أخرى");
+            }
+        });
+
+        payButton.addEventListener('click', () => {
+            let email = currentUser?.email;
+            if (!email) email = prompt("📧 بريدك الإلكتروني لإرساله للمدرس (لشراء كود التفعيل):");
+            if (email) {
+                const message = `اريد شراء كود تفعيل للوحة الطالب (الصف الثاني الإعدادي)\nالايميل: ${email}`;
+                window.open(getWhatsAppLink('01211493385', message), '_blank');
+            }
+        });
+
+        // ================================================================
+        //  9.  رفع الحظر وعرض المحتوى
+        // ================================================================
+        function unlockUI() {
+            activationBar.style.display = 'none';
+            payButtonContainer.style.display = 'none';
+            filtersContainer.style.display = 'flex';
+            tasksContainer.style.display = 'block';
+            loadingScreen.style.display = 'none';
+            if (unsubTasks) unsubTasks();
+            if (unsubSubs) unsubSubs();
+            unsubTasks = listenToTasks();
+            unsubSubs = listenToSubmissions();
+        }
+
+        function lockUI() {
+            activationBar.style.display = 'flex';
+            payButtonContainer.style.display = 'flex';
+            filtersContainer.style.display = 'none';
+            tasksContainer.style.display = 'none';
+            loadingScreen.style.display = 'none';
+            if (unsubTasks) { unsubTasks();
+                unsubTasks = null; }
+            if (unsubSubs) { unsubSubs();
+                unsubSubs = null; }
+            allTasks = [];
+            allSubmissions = [];
+            renderTasks();
+            setControls(true);
+        }
+
+        function setControls(enabled) {
+            activationCodeInput.disabled = !enabled;
+            submitCodeBtn.disabled = !enabled;
+        }
+
+        // ================================================================
+        //  10.  تحميل بيانات المستخدم والمصادقة
+        // ================================================================
+        async function loadStudentData(uid) {
+            const doc = await db.collection('users').doc(uid).get();
+            if (doc.exists) {
+                studentData = doc.data();
+                return studentData;
+            } else {
+                throw new Error('مستند المستخدم غير موجود');
+            }
+        }
+
+        auth.onAuthStateChanged(async (user) => {
+            loadingScreen.style.display = 'flex';
+            loginMessage.style.display = 'none';
+            activationBar.style.display = 'none';
+            payButtonContainer.style.display = 'none';
+            header.style.display = 'none';
+            filtersContainer.style.display = 'none';
+            tasksContainer.style.display = 'none';
+
+            if (user) {
+                currentUser = user;
+                try {
+                    await loadStudentData(user.uid);
+                    header.style.display = 'flex';
+                    studentName.textContent = `👤 ${studentData.name || 'طالب'}`;
+                    studentGrade.textContent = `الصف: ${studentData.grade || '--'}`;
+
+                    // التحقق من isActivated
+                    const isActivated = studentData.isActivated === true;
+                    if (!isActivated) {
+                        lockUI();
+                    } else {
+                        unlockUI();
+                    }
+                } catch (error) {
+                    console.error(error);
+                    loadingScreen.style.display = 'none';
+                    loginMessage.style.display = 'flex';
+                    loginMessage.querySelector('span').textContent = `⚠️ ${error.message}`;
+                }
+            } else {
+                loadingScreen.style.display = 'none';
+                loginMessage.style.display = 'flex';
+                loginMessage.querySelector('span').textContent = '🔒 يرجى تسجيل الدخول للوصول إلى لوحة الطالب';
+            }
+        });
+
+        // ================================================================
+        //  11.  تسجيل الخروج + الفلاتر
+        // ================================================================
+        logoutBtn.addEventListener('click', () => auth.signOut());
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentFilter = this.dataset.filter;
+                renderTasks();
+            });
+        });
+
+        console.log('✅ لوحة الطالب (الصف الثاني الإعدادي) مع نظام التفعيل (isActivated) + عرض سبب الرفض (مودال)');
+        console.log('📌 تأكد من أن الأدمن يحفظ teacherNote عند الرفض.');
+        console.log('📌 مثال: await db.collection("submissions").doc(id).update({ status: "rejected", teacherNote: note });');
+    </script>
+</body>
+</html>

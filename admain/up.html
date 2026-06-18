@@ -11,6 +11,10 @@
         body { font-family: 'Tajawal', sans-serif; }
         .card-hover:hover { transform: translateY(-2px); transition: 0.2s; }
         .progress-bar { transition: width 0.3s ease; }
+        .status-badge { padding: 2px 12px; border-radius: 9999px; font-size: 0.75rem; font-weight: bold; }
+        .status-active { background: #d1fae5; color: #065f46; }
+        .status-closed { background: #fee2e2; color: #991b1b; }
+        .status-expired { background: #fef3c7; color: #92400e; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -22,7 +26,66 @@
     </header>
 
     <main class="container mx-auto px-4 py-8">
-        <!-- نموذج رفع المحتوى -->
+
+        <!-- ========================================= -->
+        <!-- 1. رفع Task جديد (مع إضافة حقل الصف)       -->
+        <!-- ========================================= -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">
+                <i class="fas fa-tasks ml-2 text-purple-600"></i>
+                إضافة واجب جديد
+            </h2>
+
+            <form id="taskForm" class="space-y-4">
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block mb-2 font-semibold">📚 المادة</label>
+                        <select id="taskSubject" class="w-full border rounded-lg px-3 py-2">
+                            <option value="math">رياضيات</option>
+                            <option value="arabic">عربي</option>
+                            <option value="english">إنجليزي</option>
+                            <option value="science">علوم</option>
+                            <option value="social">دراسات</option>
+                            <option value="programming">برمجة</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">🎓 الصف الدراسي</label>
+                        <select id="taskGrade" class="w-full border rounded-lg px-3 py-2">
+                            <option value="prep1">الصف الأول الإعدادي</option>
+                            <option value="prep2">الصف الثاني الإعدادي</option>
+                            <option value="prep3">الصف الثالث الإعدادي</option>
+                            <option value="course">كورس البرمجة</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block mb-2 font-semibold">🏷️ عنوان الواجب</label>
+                    <input type="text" id="taskTitle" class="w-full border rounded-lg px-3 py-2" placeholder="مثال: واجب الدرس الأول">
+                </div>
+
+                <div>
+                    <label class="block mb-2 font-semibold">📝 الوصف</label>
+                    <textarea id="taskDesc" class="w-full border rounded-lg px-3 py-2" rows="3" placeholder="اكتب المطلوب من الطلاب"></textarea>
+                </div>
+
+                <div>
+                    <label class="block mb-2 font-semibold">⏰ آخر موعد</label>
+                    <input type="date" id="taskDeadline" class="w-full border rounded-lg px-3 py-2">
+                </div>
+
+                <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-lg">
+                    ➕ إضافة الواجب
+                </button>
+
+                <div id="taskMsg" class="mt-3 hidden"></div>
+            </form>
+        </div>
+
+        <!-- ========================================= -->
+        <!-- 2. نموذج رفع المحتوى (الموجود)             -->
+        <!-- ========================================= -->
         <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
             <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2"><i class="fas fa-upload ml-2 text-blue-600"></i>رفع محتوى جديد</h2>
             <form id="uploadForm" class="space-y-5">
@@ -62,7 +125,6 @@
                     <input type="text" id="title" placeholder="مثال: الدرس الأول - مقدمة في البرمجة" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500" required>
                 </div>
                 
-                <!-- حقل الرابط المباشر (جديد) -->
                 <div>
                     <label class="block text-gray-700 font-semibold mb-2">🔗 رابط مباشر (YouTube, Google Drive, أو أي رابط)</label>
                     <div class="flex gap-2">
@@ -72,7 +134,6 @@
                     <p class="text-xs text-gray-500 mt-1">✔️ يمكنك وضع رابط يوتيوب عادي أو رابط جوجل درايف (سيتم تحويله تلقائياً للصيغة المناسبة). إذا قمت بملء هذا الحقل، سيتم تجاهل رفع الملف.</p>
                 </div>
 
-                <!-- رفع ملف محلي (اختياري) -->
                 <div>
                     <label class="block text-gray-700 font-semibold mb-2">📁 أو رفع ملف من جهازك (اختياري)</label>
                     <input type="file" id="fileInput" accept="video/*,application/pdf,image/*" class="w-full border border-gray-300 rounded-lg px-3 py-2">
@@ -93,8 +154,10 @@
             <div id="uploadMessage" class="mt-4 hidden p-3 rounded-lg"></div>
         </div>
 
-        <!-- عرض آخر المحتويات المرفوعة -->
-        <div class="bg-white rounded-2xl shadow-lg p-6">
+        <!-- ========================================= -->
+        <!-- 3. جدول عرض المحتويات (الموجود)             -->
+        <!-- ========================================= -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
             <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2"><i class="fas fa-list ml-2 text-green-600"></i>آخر المحتويات المرفوعة</h2>
             <div id="contentList" class="overflow-x-auto">
                 <table class="min-w-full bg-white border">
@@ -114,6 +177,34 @@
                 </table>
             </div>
         </div>
+
+        <!-- ========================================= -->
+        <!-- 4. ✅ جدول عرض قائمة الواجبات (جديد)        -->
+        <!-- ========================================= -->
+        <div class="bg-white rounded-2xl shadow-lg p-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">
+                <i class="fas fa-list-check ml-2 text-purple-600"></i>
+                قائمة الواجبات المنشورة
+            </h2>
+            <div id="taskList" class="overflow-x-auto">
+                <table class="min-w-full bg-white border">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="py-2 px-3 border-b">العنوان</th>
+                            <th class="py-2 px-3 border-b">المادة</th>
+                            <th class="py-2 px-3 border-b">الصف</th>
+                            <th class="py-2 px-3 border-b">الموعد النهائي</th>
+                            <th class="py-2 px-3 border-b">الحالة</th>
+                            <th class="py-2 px-3 border-b">إجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody id="taskTableBody">
+                        <tr><td colspan="6" class="text-center py-4 text-gray-500">جاري التحميل...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </main>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -134,6 +225,7 @@
         const db = firebase.firestore();
         const storage = firebase.storage();
 
+        // ===== عناصر الصفحة =====
         const uploadForm = document.getElementById('uploadForm');
         const uploadMsg = document.getElementById('uploadMessage');
         const contentTableBody = document.getElementById('contentTableBody');
@@ -146,23 +238,18 @@
         const progressPercent = document.getElementById('progressPercent');
         const submitBtn = document.getElementById('submitBtn');
 
-        // تحويل رابط Google Drive إلى رابط مباشر قابل للتشغيل في iframe
+        const taskForm = document.getElementById('taskForm');
+        const taskMsg = document.getElementById('taskMsg');
+        const taskTableBody = document.getElementById('taskTableBody');
+
+        // ----- دوال تحويل رابط Drive -----
         function convertGoogleDriveUrl(url) {
             if (!url) return '';
-            // التعامل مع رابط المشاركة العادي: https://drive.google.com/file/d/FILE_ID/view?usp=sharing
             let match = url.match(/\/file\/d\/([^\/]+)/);
-            if (match && match[1]) {
-                return `https://drive.google.com/uc?export=download&id=${match[1]}`;
-            }
-            // ربما رابط مباشر من النوع: https://drive.google.com/uc?export=download&id=...
-            if (url.includes('uc?export=download') || url.includes('uc?id=')) {
-                return url;
-            }
-            // ربما رابط embed: https://drive.google.com/file/d/FILE_ID/preview
+            if (match && match[1]) return `https://drive.google.com/uc?export=download&id=${match[1]}`;
+            if (url.includes('uc?export=download') || url.includes('uc?id=')) return url;
             match = url.match(/\/d\/([^\/]+)\/preview/);
-            if (match && match[1]) {
-                return `https://drive.google.com/uc?export=download&id=${match[1]}`;
-            }
+            if (match && match[1]) return `https://drive.google.com/uc?export=download&id=${match[1]}`;
             return url;
         }
 
@@ -172,20 +259,24 @@
                 showMessage("⚠️ الرجاء إدخال رابط Google Drive أولاً", "error");
                 return;
             }
-            const converted = convertGoogleDriveUrl(rawUrl);
-            directUrlInput.value = converted;
-            showMessage("✅ تم تحويل الرابط إلى صيغة مباشرة (يمكنك الآن حفظ المحتوى)", "success");
+            directUrlInput.value = convertGoogleDriveUrl(rawUrl);
+            showMessage("✅ تم تحويل الرابط إلى صيغة مباشرة", "success");
         });
 
+        // ----- التحقق من المصادقة -----
         auth.onAuthStateChanged((user) => {
             if (!user) {
                 alert("يرجى تسجيل الدخول أولاً للوصول إلى لوحة الأدمن");
                 window.location.href = "../login.html";
             } else {
                 loadRecentContent();
+                loadTasks(); // تحميل قائمة الواجبات
             }
         });
 
+        // =========================================================
+        //  نظام رفع المحتوى (الموجود) 
+        // =========================================================
         uploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const grade = document.getElementById('grade').value;
@@ -202,17 +293,14 @@
 
             let finalMediaUrl = null;
 
-            // حالة 1: يوجد رابط مباشر
             if (directUrl) {
-                finalMediaUrl = convertGoogleDriveUrl(directUrl); // تأكد من تحويله مرة أخيرة
-                // حفظ البيانات مباشرة
+                finalMediaUrl = convertGoogleDriveUrl(directUrl);
                 try {
-                    const newContent = {
+                    await db.collection('content').add({
                         grade, subject, contentType, title,
                         mediaUrl: finalMediaUrl,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    };
-                    await db.collection('content').add(newContent);
+                    });
                     showMessage("✅ تم حفظ المحتوى بالرابط بنجاح!", "success");
                     uploadForm.reset();
                     document.querySelector('input[name="contentType"][value="lesson"]').checked = true;
@@ -225,13 +313,11 @@
                 return;
             }
 
-            // حالة 2: لا يوجد رابط مباشر، نستخدم رفع الملف
             if (!file) {
                 showMessage("⚠️ إما أن تضع رابطاً مباشراً أو تختار ملفاً للرفع", "error");
                 return;
             }
 
-            // رفع الملف
             submitBtn.disabled = true;
             progressContainer.classList.remove('hidden');
             progressBar.style.width = '0%';
@@ -263,13 +349,12 @@
                     },
                     async () => {
                         const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
-                        const newContent = {
+                        await db.collection('content').add({
                             grade, subject, contentType, title,
                             mediaUrl: downloadURL,
                             originalFileName: file.name,
                             createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        };
-                        await db.collection('content').add(newContent);
+                        });
                         showMessage("✅ تم رفع المحتوى بنجاح!", "success");
                         uploadForm.reset();
                         document.querySelector('input[name="contentType"][value="lesson"]').checked = true;
@@ -299,6 +384,9 @@
             setTimeout(() => uploadMsg.classList.add('hidden'), 5000);
         }
 
+        // =========================================================
+        //  عرض المحتويات (الموجود)
+        // =========================================================
         async function loadRecentContent() {
             try {
                 const snapshot = await db.collection('content')
@@ -312,14 +400,11 @@
                 let html = '';
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    const gradeLabel = getGradeLabel(data.grade);
-                    const subjectLabel = getSubjectLabel(data.subject);
-                    const typeLabel = getTypeLabel(data.contentType);
                     html += `
                         <tr class="border-b hover:bg-gray-50">
-                            <td class="py-2 px-3 text-sm">${gradeLabel}</td>
-                            <td class="py-2 px-3 text-sm">${subjectLabel}</td>
-                            <td class="py-2 px-3 text-sm">${typeLabel}</td>
+                            <td class="py-2 px-3 text-sm">${getGradeLabel(data.grade)}</td>
+                            <td class="py-2 px-3 text-sm">${getSubjectLabel(data.subject)}</td>
+                            <td class="py-2 px-3 text-sm">${getTypeLabel(data.contentType)}</td>
                             <td class="py-2 px-3 text-sm font-medium">${escapeHtml(data.title)}</td>
                             <td class="py-2 px-3 text-sm truncate max-w-xs"><a href="${data.mediaUrl}" target="_blank" class="text-blue-500 hover:underline">${truncate(data.mediaUrl, 40)}</a></td>
                             <td class="py-2 px-3"><button onclick="deleteContent('${doc.id}')" class="text-red-500 hover:text-red-700"><i class="fas fa-trash-alt"></i></button></td>
@@ -334,25 +419,164 @@
         }
 
         window.deleteContent = async (docId) => {
-            if (!confirm("هل أنت متأكد من حذف هذا المحتوى؟ سيتم حذف الملف أيضاً من التخزين إن أمكن.")) return;
+            if (!confirm("هل أنت متأكد من حذف هذا المحتوى؟")) return;
             try {
                 const docRef = db.collection('content').doc(docId);
                 const docSnap = await docRef.get();
                 const mediaUrl = docSnap.data()?.mediaUrl;
                 if (mediaUrl && mediaUrl.includes('firebasestorage.googleapis.com')) {
-                    try {
-                        const storageRef = storage.refFromURL(mediaUrl);
-                        await storageRef.delete();
-                    } catch(e) { console.warn("فشل حذف الملف من التخزين", e); }
+                    try { await storage.refFromURL(mediaUrl).delete(); } catch(e) { console.warn("فشل حذف الملف", e); }
                 }
                 await docRef.delete();
-                showMessage("🗑️ تم حذف المحتوى والملف", "success");
+                showMessage("🗑️ تم الحذف", "success");
                 loadRecentContent();
             } catch (err) {
                 alert("فشل الحذف: " + err.message);
             }
         };
 
+        // =========================================================
+        //  ✅ نظام إضافة وعرض وإدارة الواجبات (جديد)
+        // =========================================================
+
+        // --- إضافة واجب جديد ---
+        taskForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const grade = document.getElementById('taskGrade').value;
+            const subject = document.getElementById('taskSubject').value;
+            const title = document.getElementById('taskTitle').value.trim();
+            const description = document.getElementById('taskDesc').value.trim();
+            const deadline = document.getElementById('taskDeadline').value;
+
+            if (!title) {
+                showTaskMessage('⚠️ اكتب عنوان الواجب', 'error');
+                return;
+            }
+            if (!deadline) {
+                showTaskMessage('⚠️ حدد آخر موعد للواجب', 'error');
+                return;
+            }
+
+            try {
+                const docRef = await db.collection('tasks').add({
+                    grade: grade,
+                    subjectId: subject,
+                    title: title,
+                    description: description,
+                    deadline: deadline,
+                    status: 'active', // active, closed
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                showTaskMessage(`✅ تم إضافة الواجب بنجاح 🎉 (${docRef.id})`, 'success');
+                taskForm.reset();
+                loadTasks(); // تحديث الجدول
+
+            } catch (err) {
+                showTaskMessage('❌ خطأ: ' + err.message, 'error');
+            }
+        });
+
+        // --- عرض قائمة الواجبات ---
+        async function loadTasks() {
+            try {
+                const snapshot = await db.collection('tasks')
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                if (snapshot.empty) {
+                    taskTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">لا توجد واجبات منشورة</td></tr>';
+                    return;
+                }
+
+                const now = new Date();
+                let html = '';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const deadlineDate = data.deadline ? new Date(data.deadline) : null;
+                    
+                    // تحديد الحالة الفعلية (مع مراعاة انتهاء الموعد)
+                    let displayStatus = data.status; // active أو closed
+                    if (data.status === 'active' && deadlineDate && deadlineDate < now) {
+                        displayStatus = 'expired';
+                    }
+
+                    const statusBadge = getStatusBadge(displayStatus);
+                    const deadlineFormatted = data.deadline ? new Date(data.deadline).toLocaleDateString('ar-EG') : 'غير محدد';
+
+                    html += `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="py-2 px-3 text-sm font-medium">${escapeHtml(data.title)}</td>
+                            <td class="py-2 px-3 text-sm">${getSubjectLabel(data.subjectId)}</td>
+                            <td class="py-2 px-3 text-sm">${getGradeLabel(data.grade)}</td>
+                            <td class="py-2 px-3 text-sm">${deadlineFormatted}</td>
+                            <td class="py-2 px-3 text-sm">${statusBadge}</td>
+                            <td class="py-2 px-3 text-sm space-x-2">
+                                ${data.status === 'active' || displayStatus === 'expired' ? 
+                                    `<button onclick="toggleTaskStatus('${doc.id}', '${data.status}')" class="text-blue-500 hover:text-blue-700 ml-2"><i class="fas fa-toggle-on"></i> إغلاق</button>` : 
+                                    `<button onclick="toggleTaskStatus('${doc.id}', '${data.status}')" class="text-gray-500 hover:text-gray-700 ml-2"><i class="fas fa-toggle-off"></i> فتح</button>`
+                                }
+                                <button onclick="deleteTask('${doc.id}')" class="text-red-500 hover:text-red-700"><i class="fas fa-trash-alt"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                taskTableBody.innerHTML = html;
+            } catch (err) {
+                console.error(err);
+                taskTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-red-500">خطأ في تحميل الواجبات</td></tr>';
+            }
+        }
+
+        // --- تغيير حالة الواجب (active <-> closed) ---
+        window.toggleTaskStatus = async (taskId, currentStatus) => {
+            const newStatus = currentStatus === 'active' ? 'closed' : 'active';
+            if (!confirm(`هل أنت متأكد من تغيير الحالة إلى "${newStatus === 'active' ? 'مفعل' : 'مغلق'}"؟`)) return;
+            try {
+                await db.collection('tasks').doc(taskId).update({
+                    status: newStatus
+                });
+                showTaskMessage(`✅ تم تغيير الحالة إلى ${newStatus === 'active' ? 'مفعل' : 'مغلق'}`, 'success');
+                loadTasks();
+            } catch (err) {
+                alert("فشل التحديث: " + err.message);
+            }
+        };
+
+        // --- حذف واجب ---
+        window.deleteTask = async (taskId) => {
+            if (!confirm("هل أنت متأكد من حذف هذا الواجب وجميع تسليماته المرتبطة؟")) return;
+            try {
+                // ملاحظة: هنا يمكنك حذف الـ submissions المرتبطة أيضاً لو أردت
+                await db.collection('tasks').doc(taskId).delete();
+                showTaskMessage("🗑️ تم حذف الواجب", "success");
+                loadTasks();
+            } catch (err) {
+                alert("فشل الحذف: " + err.message);
+            }
+        };
+
+        // --- دوال مساعدة لعرض الحالة ---
+        function getStatusBadge(status) {
+            const map = {
+                'active': '<span class="status-badge status-active">🟢 نشط</span>',
+                'closed': '<span class="status-badge status-closed">🔴 مغلق</span>',
+                'expired': '<span class="status-badge status-expired">🟡 منتهي</span>'
+            };
+            return map[status] || status;
+        }
+
+        // --- رسائل الواجبات ---
+        function showTaskMessage(msg, type) {
+            taskMsg.classList.remove('hidden');
+            taskMsg.className = type === 'success' ? 'mt-3 text-green-600' : 'mt-3 text-red-600';
+            taskMsg.innerText = msg;
+            setTimeout(() => taskMsg.classList.add('hidden'), 5000);
+        }
+
+        // =========================================================
+        //  دوال مساعدة عامة
+        // =========================================================
         function getGradeLabel(grade) {
             const map = { prep1: "الأول الإعدادي", prep2: "الثاني الإعدادي", prep3: "الثالث الإعدادي", course: "كورس البرمجة" };
             return map[grade] || grade;
@@ -381,7 +605,7 @@
 
         logoutBtn.addEventListener('click', () => {
             auth.signOut().then(() => {
-                window.location.href = "../login.html";
+                window.location.href = "../index.html";
             });
         });
     </script>

@@ -29,7 +29,9 @@
             align-items: center;
             backdrop-filter: blur(4px);
         }
-        .video-modal.active { display: flex; }
+        .video-modal.active {
+            display: flex;
+        }
         .video-modal-content {
             background: #fff;
             border-radius: 16px;
@@ -58,7 +60,10 @@
             align-items: center;
             justify-content: center;
         }
-        .video-modal-close:hover { background: #c53030; transform: scale(1.05); }
+        .video-modal-close:hover {
+            background: #c53030;
+            transform: scale(1.05);
+        }
         .video-modal-iframe {
             position: relative;
             width: 100%;
@@ -90,7 +95,9 @@
             align-items: center;
             backdrop-filter: blur(4px);
         }
-        .submit-modal.active, .details-modal.active { display: flex; }
+        .submit-modal.active, .details-modal.active {
+            display: flex;
+        }
         .submit-modal-content, .details-modal-content {
             background: #fff;
             border-radius: 16px;
@@ -138,7 +145,9 @@
             background: #fff;
             border-right: 4px solid transparent;
         }
-        .task-list-item:hover { background: #f9fafb; }
+        .task-list-item:hover {
+            background: #f9fafb;
+        }
         .task-list-item.not-submitted {
             background: #fff7ed;
             border-right-color: #f59e0b;
@@ -185,10 +194,9 @@
         .task-status.pending { background: #fef3c7; color: #92400e; }
         .task-status.reviewed { background: #dbeafe; color: #1e40af; }
         .task-status.completed { background: #d1fae5; color: #065f46; }
-        .task-status.accepted { background: #d1fae5; color: #065f46; }
-        .task-status.rejected { background: #fee2e2; color: #991b1b; }
         .task-status.not-submitted { background: #f3f4f6; color: #374151; }
 
+        /* Badge */
         .badge {
             display: inline-block;
             background: #e53e3e;
@@ -200,7 +208,9 @@
             margin-right: 6px;
             vertical-align: middle;
         }
-        .badge-new { background: #f59e0b; }
+        .badge-new {
+            background: #f59e0b;
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
@@ -250,7 +260,9 @@
         <div class="details-modal-content" onclick="event.stopPropagation()">
             <button class="details-modal-close" onclick="closeDetailsModal()">✕</button>
             <h3 class="text-xl font-bold mb-3 text-center">📋 تفاصيل الواجب</h3>
-            <div id="detailsContent"></div>
+            <div id="detailsContent">
+                <!-- يتم ملؤها ديناميكياً -->
+            </div>
         </div>
     </div>
 
@@ -291,7 +303,7 @@
 
         const CURRENT_SUBJECT = "programming";
         let currentGrade = "course";
-        let currentTab = "lessons";          // موحّد مع اسم التبويب
+        let currentTab = "lesson";
         let isActivated = false;
 
         const tabBtns = document.querySelectorAll('.tab-btn');
@@ -305,40 +317,44 @@
 
         const videoModal = document.getElementById('videoModal');
         const videoModalWrapper = document.getElementById('videoModalIframeWrapper');
+
         const detailsModal = document.getElementById('detailsModal');
         const detailsContent = document.getElementById('detailsContent');
+
         const submitModal = document.getElementById('submitModal');
         const imageUrlInput = document.getElementById('imageUrlInput');
         const fileUrlInput = document.getElementById('fileUrlInput');
         const submitForm = document.getElementById('submitForm');
 
+        // ===== المتغيرات العامة =====
         let tasksData = {};
         let submissionsMap = {};
 
         const tabMeta = {
-            lessons: { type: "lessons", title: "محاضرات كورس البرمجة", icon: "fa-video", color: "text-red-600", btnText: "تشغيل الفيديو", btnIcon: "fa-play-circle" },
-            exercises: { type: "exercises", title: "التدريبات البرمجية", icon: "fa-pen-fancy", color: "text-blue-600", btnText: "تحميل التدريب", btnIcon: "fa-download" },
-            files: { type: "files", title: "الملخصات والمذكرات", icon: "fa-file-pdf", color: "text-purple-600", btnText: "تحميل المذكرة", btnIcon: "fa-download" },
-            assignments: { type: "assignments", title: "الواجبات", icon: "fa-tasks", color: "text-green-600", btnText: "تسليم الواجب", btnIcon: "fa-upload" }
+            lessons: { type: "lesson", title: "محاضرات كورس البرمجة", icon: "fa-video", color: "text-red-600", btnText: "تشغيل الفيديو", btnIcon: "fa-play-circle" },
+            exercises: { type: "exercise", title: "التدريبات البرمجية", icon: "fa-pen-fancy", color: "text-blue-600", btnText: "تحميل التدريب", btnIcon: "fa-download" },
+            files: { type: "file", title: "الملخصات والمذكرات", icon: "fa-file-pdf", color: "text-purple-600", btnText: "تحميل المذكرة", btnIcon: "fa-download" },
+            assignments: { type: "assignment", title: "الواجبات", icon: "fa-tasks", color: "text-green-600", btnText: "تسليم الواجب", btnIcon: "fa-upload" }
         };
-
-        // دالة لتطبيع الحالة
-        function normalizeStatus(raw) {
-            return (raw || 'pending').toLowerCase().trim();
-        }
 
         // ===== دوال مساعدة =====
         function getEmbedUrl(url) {
             if (!url) return '';
-            if (url.includes('youtube.com/watch?v=')) return url.replace('watch?v=', 'embed/');
+            if (url.includes('youtube.com/watch?v=')) {
+                return url.replace('watch?v=', 'embed/');
+            }
             if (url.includes('youtu.be/')) {
                 const id = url.split('youtu.be/')[1].split('?')[0];
                 return `https://www.youtube.com/embed/${id}`;
             }
             if (url.includes('drive.google.com')) {
-                const match = url.match(/\/file\/d\/([^\/]+)/);
-                if (match) return `https://drive.google.com/file/d/${match[1]}/preview`;
-                if (url.includes('/preview') || url.includes('embed')) return url;
+                let match = url.match(/\/file\/d\/([^\/]+)/);
+                if (match) {
+                    return `https://drive.google.com/file/d/${match[1]}/preview`;
+                }
+                if (url.includes('/preview') || url.includes('embed')) {
+                    return url;
+                }
             }
             return url;
         }
@@ -359,18 +375,15 @@
             document.body.style.overflow = '';
         }
 
-        // ===== مودال التفاصيل =====
+        // ===== مودال التفاصيل (باستخدام taskId) =====
         function openDetailsModal(taskId) {
             const task = tasksData[taskId];
-            if (!task) return alert('⚠️ بيانات الواجب غير متوفرة');
+            if (!task) {
+                alert('⚠️ بيانات الواجب غير متوفرة');
+                return;
+            }
             const submission = task.submission;
-            const statusMap = {
-                pending: '🟡 قيد المراجعة',
-                accepted: '🟢 تم قبول الواجب',
-                rejected: '🔴 يحتاج تعديل',
-                reviewed: '🔵 تم المراجعة',
-                completed: '🟢 مكتمل'
-            };
+
             let html = `
                 <div class="mb-4">
                     <h4 class="font-bold text-lg">${task.title || 'بدون عنوان'}</h4>
@@ -381,12 +394,16 @@
                 </div>
             `;
             if (submission) {
-                const status = normalizeStatus(submission.status);
-                const statusText = statusMap[status] || '🟡 قيد المراجعة';
+                const statusMap = {
+                    'pending': '🟡 قيد المراجعة',
+                    'reviewed': '🔵 تم المراجعة',
+                    'completed': '🟢 مكتمل'
+                };
+                const statusClass = submission.status || 'pending';
                 const fileLink = submission.driveLink || submission.fileUrl || '';
                 html += `
                     <div class="border-t pt-3 mt-2">
-                        <p><span class="font-semibold">حالة التسليم:</span> <span class="task-status ${status}">${statusText}</span></p>
+                        <p><span class="font-semibold">حالة التسليم:</span> <span class="task-status ${statusClass}">${statusMap[statusClass] || '🟡 قيد المراجعة'}</span></p>
                         ${submission.teacherNote ? `<p class="mt-1 text-sm bg-blue-50 p-2 rounded border-r-4 border-blue-400"><i class="fas fa-comment text-blue-600"></i> ملاحظة المدرس: ${submission.teacherNote}</p>` : ''}
                         <div class="mt-2 space-y-1">
                             ${fileLink ? `<a href="${fileLink}" target="_blank" class="text-blue-600 underline block"><i class="fas fa-file"></i> ملف الواجب</a>` : ''}
@@ -395,7 +412,11 @@
                     </div>
                 `;
             } else {
-                html += `<div class="border-t pt-3 mt-2 text-gray-500"><p><i class="fas fa-hourglass-half"></i> لم تقم بتسليم هذا الواجب بعد.</p></div>`;
+                html += `
+                    <div class="border-t pt-3 mt-2 text-gray-500">
+                        <p><i class="fas fa-hourglass-half"></i> لم تقم بتسليم هذا الواجب بعد.</p>
+                    </div>
+                `;
             }
             detailsContent.innerHTML = html;
             detailsModal.classList.add('active');
@@ -426,6 +447,7 @@
             currentTaskId = null;
         }
 
+        // ===== تعديل: حفظ التسليم مع taskTitle و studentName =====
         submitForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!currentTaskId) return alert('خطأ: لم يتم تحديد الواجب.');
@@ -434,16 +456,20 @@
             const imageUrl = imageUrlInput.value.trim();
             if (!fileUrl) return alert('يرجى إدخال رابط ملف الواجب.');
 
-            const studentName = auth.currentUser.displayName || auth.currentUser.email || 'طالب';
+            // جلب اسم الطالب
+            let studentName = auth.currentUser.displayName || auth.currentUser.email || 'طالب';
+            // (يمكن تحسينه بجلب من users collection إذا كان لديك اسم محدد)
+
+            // جلب عنوان الواجب من tasksData
             const taskData = tasksData[currentTaskId];
             const taskTitle = taskData ? taskData.title : 'بدون عنوان';
 
             try {
                 await db.collection('submissions').add({
                     taskId: currentTaskId,
-                    taskTitle,
+                    taskTitle: taskTitle,          // إضافة
                     studentId: auth.currentUser.uid,
-                    studentName,
+                    studentName: studentName,      // إضافة
                     userEmail: auth.currentUser.email || 'unknown',
                     subject: CURRENT_SUBJECT,
                     grade: currentGrade,
@@ -485,7 +511,8 @@
         async function loadSubjectContent() {
             contentGrid.innerHTML = '<p class="text-gray-500 col-span-full text-center py-10">⏳ جاري تحميل المحتوى...</p>';
             try {
-                if (currentTab === 'assignments') {
+                if (currentTab === 'assignment') {
+                    // استعلام بدون orderBy لتجنب الحاجة إلى Index
                     const snapshot = await db.collection('tasks')
                         .where('grade', '==', currentGrade)
                         .where('subjectId', '==', CURRENT_SUBJECT)
@@ -499,7 +526,7 @@
                         return;
                     }
 
-                    // تخزين المهام
+                    // تخزين البيانات في tasksData
                     tasksData = {};
                     const tasks = [];
                     snapshot.forEach(doc => {
@@ -516,74 +543,72 @@
                         tasks.push({ id: doc.id, ...data });
                     });
 
-                    // جلب التسليمات (مع تجاوز حد 10)
+                    // جلب التسليمات
                     const user = auth.currentUser;
                     if (!user) return;
                     const taskIds = tasks.map(t => t.id);
                     submissionsMap = {};
                     if (taskIds.length > 0) {
-                        const fetchSubmissions = async (idField) => {
-                            const all = [];
-                            for (let i = 0; i < taskIds.length; i += 10) {
-                                const chunk = taskIds.slice(i, i + 10);
-                                const subsSnap = await db.collection('submissions')
-                                    .where(idField, '==', user.uid)
-                                    .where('taskId', 'in', chunk)
-                                    .get();
-                                subsSnap.forEach(d => all.push({ id: d.id, ...d.data() }));
-                            }
-                            return all;
-                        };
-                        let subsData = await fetchSubmissions('studentId');
-                        if (subsData.length === 0) subsData = await fetchSubmissions('userId');
-
-                        subsData.forEach(data => {
-                            submissionsMap[data.taskId] = data;
+                        // البحث باستخدام studentId (الجديد) أولاً، ثم userId (القديم)
+                        let subsSnap = await db.collection('submissions')
+                            .where('studentId', '==', user.uid)
+                            .where('taskId', 'in', taskIds)
+                            .get();
+                        if (subsSnap.empty) {
+                            subsSnap = await db.collection('submissions')
+                                .where('userId', '==', user.uid)
+                                .where('taskId', 'in', taskIds)
+                                .get();
+                        }
+                        subsSnap.forEach(doc => {
+                            const data = doc.data();
+                            submissionsMap[data.taskId] = { id: doc.id, ...data };
                             if (tasksData[data.taskId]) {
                                 tasksData[data.taskId].submission = submissionsMap[data.taskId];
                             }
                         });
                     }
 
-                    // ترتيب المهام (غير المسلمة أولاً)
+                    // ترتيب المهام: غير المسلمة أولاً
                     tasks.sort((a, b) => {
-                        const aS = !!submissionsMap[a.id];
-                        const bS = !!submissionsMap[b.id];
-                        return (aS === bS) ? 0 : (aS ? 1 : -1);
+                        const aSubmitted = !!submissionsMap[a.id];
+                        const bSubmitted = !!submissionsMap[b.id];
+                        if (!aSubmitted && bSubmitted) return -1;
+                        if (aSubmitted && !bSubmitted) return 1;
+                        return 0;
                     });
 
-                    // Badge
-                    const total = tasks.length;
+                    // تحديث Badge
+                    const totalTasks = tasks.length;
                     const submittedCount = Object.keys(submissionsMap).length;
-                    const notSubmitted = total - submittedCount;
+                    const notSubmittedCount = totalTasks - submittedCount;
                     const meta = tabMeta.assignments;
-                    let badgeHtml = `<span class="badge">${total}</span>`;
-                    if (notSubmitted > 0) badgeHtml += ` <span class="badge badge-new">${notSubmitted} جديدة</span>`;
+                    let badgeHtml = `<span class="badge">${totalTasks}</span>`;
+                    if (notSubmittedCount > 0) {
+                        badgeHtml += ` <span class="badge badge-new">${notSubmittedCount} جديدة</span>`;
+                    }
                     sectionTitle.innerHTML = `<i class="fas ${meta.icon} mr-2 ${meta.color}"></i> ${meta.title} ${badgeHtml}`;
 
                     // عرض القائمة
                     contentGrid.className = 'grid grid-cols-1 gap-1';
                     contentGrid.innerHTML = '';
 
-                    const statusMap = {
-                        pending: '🟡 قيد المراجعة',
-                        accepted: '🟢 تم قبول الواجب',
-                        rejected: '🔴 يحتاج تعديل',
-                        reviewed: '🔵 تم المراجعة',
-                        completed: '🟢 مكتمل'
-                    };
-
                     tasks.forEach(task => {
                         const taskId = task.id;
                         const submission = submissionsMap[taskId] || null;
-                        let statusHtml = '', actionButtons = '', notSubmittedClass = '';
+
+                        let statusHtml = '';
+                        let actionButtons = '';
+                        let notSubmittedClass = '';
 
                         // تاريخ التسليم بالألوان
                         let deadlineHtml = '';
                         if (task.deadline) {
                             const now = new Date();
-                            const diff = (new Date(task.deadline) - now) / (1000 * 60 * 60 * 24);
-                            let colorClass = 'deadline-far', icon = '🟢';
+                            const deadlineDate = new Date(task.deadline);
+                            const diff = (deadlineDate - now) / (1000 * 60 * 60 * 24);
+                            let colorClass = 'deadline-far';
+                            let icon = '🟢';
                             if (diff < 0) { colorClass = 'deadline-overdue'; icon = '🔴'; }
                             else if (diff <= 1) { colorClass = 'deadline-close'; icon = '🟠'; }
                             deadlineHtml = `<span class="${colorClass}">${icon} ${task.deadline}</span>`;
@@ -592,9 +617,14 @@
                         }
 
                         if (submission) {
-                            const status = normalizeStatus(submission.status);
-                            const statusText = statusMap[status] || '🟡 قيد المراجعة';
-                            statusHtml = `<span class="task-status ${status}">${statusText}</span>`;
+                            const status = submission.status || 'pending';
+                            const statusMap = {
+                                'pending': '🟡 قيد المراجعة',
+                                'reviewed': '🔵 تم المراجعة',
+                                'completed': '🟢 مكتمل'
+                            };
+                            const statusClass = status;
+                            statusHtml = `<span class="task-status ${statusClass}">${statusMap[status]}</span>`;
                             actionButtons = `
                                 <button onclick="openDetailsModal('${taskId}')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-sm font-medium">
                                     <i class="fas fa-eye"></i> عرض التسليم
@@ -640,21 +670,21 @@
                         return;
                     }
                     contentGrid.innerHTML = '';
-                    const meta = tabMeta[currentTab];
+                    const activeKey = Object.keys(tabMeta).find(k => tabMeta[k].type === currentTab);
+                    const meta = tabMeta[activeKey];
+
                     snapshot.forEach(doc => {
                         const data = doc.data();
                         const card = document.createElement('div');
                         card.className = "lesson-card bg-white rounded-lg shadow-md overflow-hidden relative";
 
-                        let icon = currentTab === 'lessons' ? 'fa-video' : (currentTab === 'exercises' ? 'fa-pen-ruler' : 'fa-file-pdf');
+                        let icon = currentTab === 'lesson' ? 'fa-video' : (currentTab === 'exercise' ? 'fa-pen-ruler' : 'fa-file-pdf');
                         let overlay = !isActivated ? `<div class="locked-overlay"><i class="fas fa-lock text-3xl mb-2"></i><span>محتوى مقفل</span></div>` : '';
                         let mediaArea = `<div class="preview-icon"><i class="fas ${icon} fa-4x"></i>${overlay}</div>`;
 
+                        const actionDisabled = !isActivated ? 'disabled' : '';
                         const videoUrl = data.mediaUrl || '';
-                        // استخدام data-url بدلاً من onclick المباشر
-                        const btnHtml = isActivated ? 
-                            `<button class="${meta.color} text-sm font-medium action-btn" data-url="${videoUrl}" onclick="handleAction(this)"><i class="fas ${meta.btnIcon}"></i> ${meta.btnText}</button>` :
-                            `<button class="${meta.color} text-sm font-medium action-btn" disabled onclick="alert('🔐 فعّل حسابك أولاً')"><i class="fas ${meta.btnIcon}"></i> ${meta.btnText}</button>`;
+                        const btnOnClick = isActivated ? `handleAction('${videoUrl}')` : `alert('🔐 فعّل حسابك أولاً')`;
 
                         card.innerHTML = `
                             ${mediaArea}
@@ -663,7 +693,9 @@
                                 <p class="text-gray-600 text-sm mb-2"><i class="far fa-clock"></i> متاح فور التفعيل</p>
                                 <div class="flex justify-between">
                                     <span class="text-sm text-gray-500"><i class="fas ${meta.icon}"></i> كورس البرمجة</span>
-                                    ${btnHtml}
+                                    <button onclick="${btnOnClick}" class="${meta.color} text-sm font-medium action-btn" ${actionDisabled}>
+                                        <i class="fas ${meta.btnIcon}"></i> ${meta.btnText}
+                                    </button>
                                 </div>
                             </div>
                         `;
@@ -676,14 +708,12 @@
             }
         }
 
-        // دالة handleAction باستخدام dataset
-        window.handleAction = (btnElement) => {
+        window.handleAction = (url) => {
             if (!isActivated) {
                 alert("🔐 فعّل حسابك أولاً");
                 return;
             }
-            const url = btnElement.dataset.url;
-            if (currentTab === 'lessons') {
+            if (currentTab === 'lesson') {
                 openVideoModal(url);
             } else {
                 if (url) window.open(url, '_blank');
@@ -691,23 +721,9 @@
             }
         };
 
-        // ===== دوال التفعيل =====
-        function unlockUI() {
-            isActivated = true;
-            paymentAlert.classList.add('hidden');
-            payButtonContainer.classList.add('hidden');
-            loadSubjectContent();
-        }
-        function lockUI() {
-            isActivated = false;
-            paymentAlert.classList.remove('hidden');
-            payButtonContainer.classList.remove('hidden');
-            loadSubjectContent();
-        }
-        function setControls(enabled) {
-            activationCodeInput.disabled = !enabled;
-            submitCodeBtn.disabled = !enabled;
-        }
+        function unlockUI() { isActivated = true; paymentAlert.classList.add('hidden'); payButtonContainer.classList.add('hidden'); loadSubjectContent(); }
+        function lockUI() { isActivated = false; paymentAlert.classList.remove('hidden'); payButtonContainer.classList.remove('hidden'); loadSubjectContent(); }
+        function setControls(enabled) { activationCodeInput.disabled = !enabled; submitCodeBtn.disabled = !enabled; }
 
         async function checkUserActivation(uid) {
             try {
@@ -759,13 +775,7 @@
         });
 
         auth.onAuthStateChanged(async (user) => {
-            if (!user) {
-                alert("يرجى تسجيل الدخول أولاً");
-                window.location.href = "../index.html";
-                return;
-            }
-            // تفعيل عناصر التحكم بعد تسجيل الدخول
-            setControls(true);
+            if (!user) { alert("يرجى تسجيل الدخول أولاً"); window.location.href = "../index.html"; return; }
             await checkUserActivation(user.uid);
         });
     </script>

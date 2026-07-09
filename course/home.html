@@ -1,783 +1,1747 @@
 <!DOCTYPE html>
+
 <html lang="ar" dir="rtl">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>كورس البرمجة | Nemo</title>
+
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
     <style>
+
         body { font-family: 'Tajawal', sans-serif; }
+
         .lesson-card { transition: all 0.3s ease; }
+
         .lesson-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+
         .locked-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; border-radius: 0.5rem; z-index: 5; }
+
         .tab-btn { transition: all 0.3s ease; }
+
         .active-tab { background-color: #e53e3e; color: white; }
+
         .no-scrollbar::-webkit-scrollbar { display: none; }
+
         .preview-icon { display: flex; align-items: center; justify-content: center; height: 160px; background-color: #f3f4f6; color: #4b5563; font-size: 3rem; position: relative; }
+
         .disabled-btn { opacity: 0.6; cursor: not-allowed; }
 
-        /* مودال الفيديو */
+
+
+        /* مودال الفيديو - دعم Cloudinary */
+
         .video-modal {
+
             display: none;
+
             position: fixed;
+
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
+
+            background: rgba(0,0,0,0.85);
+
             z-index: 9999;
+
             justify-content: center;
+
             align-items: center;
-            backdrop-filter: blur(4px);
+
+            backdrop-filter: blur(8px);
+
         }
-        .video-modal.active {
-            display: flex;
-        }
+
+        .video-modal.active { display: flex; }
+
         .video-modal-content {
-            background: #fff;
-            border-radius: 16px;
-            max-width: 900px;
-            width: 92%;
-            padding: 16px;
+
+            background: #1a1a2e;
+
+            border-radius: 20px;
+
+            max-width: 960px;
+
+            width: 94%;
+
+            padding: 12px;
+
             position: relative;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-            animation: fadeIn 0.25s ease;
+
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+
+            animation: fadeIn 0.3s ease;
+
+            border: 1px solid rgba(255,255,255,0.1);
+
         }
+
         .video-modal-close {
+
             position: absolute;
-            top: 8px;
-            left: 12px;
+
+            top: -14px;
+
+            left: -14px;
+
             background: #e53e3e;
+
             color: white;
+
             border: none;
+
             border-radius: 50%;
-            width: 36px;
-            height: 36px;
-            font-size: 20px;
+
+            width: 40px;
+
+            height: 40px;
+
+            font-size: 22px;
+
             cursor: pointer;
+
             transition: 0.2s;
-            z-index: 10;
+
+            z-index: 20;
+
             display: flex;
+
             align-items: center;
+
             justify-content: center;
+
+            box-shadow: 0 4px 12px rgba(229,62,62,0.4);
+
         }
-        .video-modal-close:hover {
-            background: #c53030;
-            transform: scale(1.05);
-        }
+
+        .video-modal-close:hover { background: #c53030; transform: scale(1.1); }
+
         .video-modal-iframe {
+
             position: relative;
+
             width: 100%;
+
             padding-bottom: 56.25%;
+
             height: 0;
+
             border-radius: 12px;
+
             overflow: hidden;
+
         }
+
         .video-modal-iframe iframe {
+
             position: absolute;
+
             top: 0; left: 0;
+
             width: 100%;
+
             height: 100%;
+
             border: none;
+
         }
+
+        /* فيديو Cloudinary مباشر */
+
+        .video-modal-player {
+
+            width: 100%;
+
+            border-radius: 12px;
+
+            max-height: 80vh;
+
+            background: #000;
+
+        }
+
+        .video-modal-player video {
+
+            width: 100%;
+
+            border-radius: 12px;
+
+            max-height: 80vh;
+
+            display: block;
+
+        }
+
+
+
         @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
+
+            from { opacity: 0; transform: scale(0.95) translateY(20px); }
+
+            to { opacity: 1; transform: scale(1) translateY(0); }
+
         }
+
+
 
         /* مودال رفع الواجب + مودال التفاصيل */
+
         .submit-modal, .details-modal {
+
             display: none;
+
             position: fixed;
+
             top: 0; left: 0; width: 100%; height: 100%;
+
             background: rgba(0,0,0,0.7);
+
             z-index: 10000;
+
             justify-content: center;
+
             align-items: center;
+
             backdrop-filter: blur(4px);
-        }
-        .submit-modal.active, .details-modal.active {
-            display: flex;
-        }
-        .submit-modal-content, .details-modal-content {
-            background: #fff;
-            border-radius: 16px;
-            max-width: 600px;
-            width: 92%;
-            padding: 24px;
-            position: relative;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-            animation: fadeIn 0.25s ease;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        .submit-modal-close, .details-modal-close {
-            position: absolute;
-            top: 8px;
-            left: 12px;
-            background: #e53e3e;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 36px;
-            height: 36px;
-            font-size: 20px;
-            cursor: pointer;
-            transition: 0.2s;
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .submit-modal-close:hover, .details-modal-close:hover {
-            background: #c53030;
-            transform: scale(1.05);
+
         }
 
-        /* تنسيق قائمة الواجبات */
-        .task-list-item {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 16px;
-            border-bottom: 1px solid #e5e7eb;
-            transition: background 0.2s;
+        .submit-modal.active, .details-modal.active { display: flex; }
+
+        .submit-modal-content, .details-modal-content {
+
             background: #fff;
-            border-right: 4px solid transparent;
+
+            border-radius: 16px;
+
+            max-width: 600px;
+
+            width: 92%;
+
+            padding: 24px;
+
+            position: relative;
+
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+
+            animation: fadeIn 0.25s ease;
+
+            max-height: 90vh;
+
+            overflow-y: auto;
+
         }
-        .task-list-item:hover {
-            background: #f9fafb;
-        }
-        .task-list-item.not-submitted {
-            background: #fff7ed;
-            border-right-color: #f59e0b;
-        }
-        .task-title-wrapper {
-            flex: 1 1 200px;
-            min-width: 150px;
-        }
-        .task-title {
-            font-weight: 600;
-            font-size: 1rem;
-            overflow: hidden;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            line-height: 1.4;
-        }
-        .task-deadline {
-            font-size: 0.75rem;
-            margin-top: 2px;
+
+        .submit-modal-close, .details-modal-close {
+
+            position: absolute;
+
+            top: 8px;
+
+            left: 12px;
+
+            background: #e53e3e;
+
+            color: white;
+
+            border: none;
+
+            border-radius: 50%;
+
+            width: 36px;
+
+            height: 36px;
+
+            font-size: 20px;
+
+            cursor: pointer;
+
+            transition: 0.2s;
+
+            z-index: 10;
+
             display: flex;
+
             align-items: center;
-            gap: 4px;
+
+            justify-content: center;
+
         }
+
+        .submit-modal-close:hover, .details-modal-close:hover {
+
+            background: #c53030;
+
+            transform: scale(1.05);
+
+        }
+
+
+
+        .task-list-item {
+
+            display: flex;
+
+            flex-wrap: wrap;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            padding: 12px 16px;
+
+            border-bottom: 1px solid #e5e7eb;
+
+            transition: background 0.2s;
+
+            background: #fff;
+
+            border-right: 4px solid transparent;
+
+        }
+
+        .task-list-item:hover { background: #f9fafb; }
+
+        .task-list-item.not-submitted { background: #fff7ed; border-right-color: #f59e0b; }
+
+        .task-title-wrapper { flex: 1 1 200px; min-width: 150px; }
+
+        .task-title { font-weight: 600; font-size: 1rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.4; }
+
+        .task-deadline { font-size: 0.75rem; margin-top: 2px; display: flex; align-items: center; gap: 4px; }
+
         .task-deadline .deadline-far { color: #10b981; }
+
         .task-deadline .deadline-close { color: #f59e0b; }
+
         .task-deadline .deadline-overdue { color: #ef4444; }
 
-        .task-actions {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        .task-status {
-            font-size: 0.8rem;
-            padding: 2px 10px;
-            border-radius: 20px;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
+
+
+        .task-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+        .task-status { font-size: 0.8rem; padding: 2px 10px; border-radius: 20px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; }
+
         .task-status.pending { background: #fef3c7; color: #92400e; }
+
         .task-status.reviewed { background: #dbeafe; color: #1e40af; }
+
         .task-status.completed { background: #d1fae5; color: #065f46; }
+
         .task-status.not-submitted { background: #f3f4f6; color: #374151; }
 
-        /* Badge */
-        .badge {
-            display: inline-block;
-            background: #e53e3e;
+
+
+        .badge { display: inline-block; background: #e53e3e; color: white; font-size: 0.7rem; font-weight: bold; padding: 0.1rem 0.6rem; border-radius: 20px; margin-right: 6px; vertical-align: middle; }
+
+        .badge-new { background: #f59e0b; }
+
+
+
+        /* زر رفع Cloudinary */
+
+        .cloudinary-upload-btn {
+
+            background: linear-gradient(135deg, #3448C5, #1E2A6E);
+
             color: white;
-            font-size: 0.7rem;
-            font-weight: bold;
-            padding: 0.1rem 0.6rem;
-            border-radius: 20px;
-            margin-right: 6px;
-            vertical-align: middle;
+
+            border: none;
+
+            padding: 12px 20px;
+
+            border-radius: 12px;
+
+            cursor: pointer;
+
+            font-weight: 600;
+
+            transition: 0.3s;
+
+            display: inline-flex;
+
+            align-items: center;
+
+            gap: 8px;
+
+            width: 100%;
+
+            justify-content: center;
+
         }
-        .badge-new {
-            background: #f59e0b;
+
+        .cloudinary-upload-btn:hover {
+
+            transform: scale(1.02);
+
+            box-shadow: 0 4px 15px rgba(52,72,197,0.4);
+
         }
+
+        .cloudinary-upload-btn i {
+
+            font-size: 1.2rem;
+
+        }
+
+        .upload-status {
+
+            font-size: 0.85rem;
+
+            margin-top: 6px;
+
+            color: #2d3748;
+
+        }
+
+        .upload-status.success { color: #38a169; }
+
+        .upload-status.error { color: #e53e3e; }
+
+        .upload-preview {
+
+            background: #f7fafc;
+
+            padding: 8px 12px;
+
+            border-radius: 8px;
+
+            font-size: 0.8rem;
+
+            color: #4a5568;
+
+            word-break: break-all;
+
+            margin-top: 6px;
+
+            border: 1px dashed #cbd5e0;
+
+            display: none;
+
+        }
+
+        .upload-preview.show { display: block; }
+
+        .upload-preview img {
+
+            max-width: 100%;
+
+            max-height: 200px;
+
+            border-radius: 8px;
+
+            margin-top: 8px;
+
+        }
+
     </style>
+
+    <!-- Cloudinary Widget SDK -->
+
+    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
+
 </head>
+
 <body class="bg-gray-50 min-h-screen flex flex-col">
+
     <header class="bg-gray-900 text-white py-4 shadow-lg">
+
         <div class="container mx-auto px-4">
+
             <div class="text-xl font-bold">Nemo | كورس البرمجة <span class="text-sm bg-purple-600 rounded-md px-2 py-0.5 mr-2 align-middle">Programming</span></div>
+
         </div>
+
     </header>
+
     <nav class="bg-white shadow-sm sticky top-0 z-10">
+
         <div class="container mx-auto px-4 overflow-x-auto no-scrollbar">
+
             <div class="flex space-x-1 space-x-reverse py-3">
+
                 <button data-tab="lessons" class="tab-btn active-tab px-6 py-2 rounded-lg font-medium"><i class="fas fa-video mr-2"></i> الشروحات</button>
+
                 <button data-tab="exercises" class="tab-btn px-6 py-2 rounded-lg font-medium"><i class="fas fa-pen-fancy mr-2"></i> التدريبات</button>
+
                 <button data-tab="exams" class="tab-btn px-6 py-2 rounded-lg font-medium"><i class="fas fa-clipboard-list mr-2"></i> الامتحانات</button>
+
                 <button data-tab="files" class="tab-btn px-6 py-2 rounded-lg font-medium"><i class="fas fa-file-pdf mr-2"></i> الملفات</button>
+
                 <button data-tab="assignments" class="tab-btn px-6 py-2 rounded-lg font-medium"><i class="fas fa-tasks mr-2"></i> الواجبات</button>
+
             </div>
+
         </div>
+
     </nav>
+
     <main class="flex-grow container mx-auto px-4 py-6">
+
         <div id="paymentAlert" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+
             <div><i class="fas fa-lock text-xl mr-3 mt-1"></i><div><p class="font-bold">🔒 هذا المحتوى مقفل</p><p>أدخل كود التفعيل الصحيح لفتح جميع محتويات كورس البرمجة.</p></div></div>
+
             <div class="flex gap-2 w-full md:w-auto">
+
                 <input type="text" id="activationCodeInput" placeholder="مثال: ABC1-D2E3-FG45" class="px-3 py-2 border border-yellow-400 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 text-black flex-grow" disabled>
+
                 <button id="submitCodeBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg font-bold whitespace-nowrap transition-colors disabled:opacity-50" disabled>تفعيل</button>
+
             </div>
+
         </div>
+
         <section class="tab-content">
+
             <h2 id="sectionTitle" class="text-xl font-bold mb-4 text-gray-800 border-b pb-2"><i class="fas fa-video mr-2 text-red-600"></i> محاضرات كورس البرمجة</h2>
+
             <div id="contentGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">⏳ جاري التحميل...</div>
+
         </section>
+
     </main>
+
     <div id="payButtonContainer" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-20">
+
         <button id="payButton" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full shadow-lg flex items-center"><i class="fab fa-whatsapp text-xl mr-2"></i> شراء كود التفعيل عبر واتساب (كورس البرمجة)</button>
+
     </div>
+
+
 
     <!-- مودال الفيديو -->
+
     <div id="videoModal" class="video-modal" onclick="closeVideoModal(event)">
+
         <div class="video-modal-content" onclick="event.stopPropagation()">
+
             <button class="video-modal-close" onclick="closeVideoModal()">✕</button>
-            <div class="video-modal-iframe" id="videoModalIframeWrapper"></div>
+
+            <div id="videoModalContainer" class="video-modal-iframe"></div>
+
         </div>
+
     </div>
+
+
 
     <!-- مودال تفاصيل الواجب -->
+
     <div id="detailsModal" class="details-modal" onclick="closeDetailsModal(event)">
+
         <div class="details-modal-content" onclick="event.stopPropagation()">
+
             <button class="details-modal-close" onclick="closeDetailsModal()">✕</button>
+
             <h3 class="text-xl font-bold mb-3 text-center">📋 تفاصيل الواجب</h3>
-            <div id="detailsContent">
-                <!-- يتم ملؤها ديناميكياً -->
-            </div>
+
+            <div id="detailsContent"></div>
+
         </div>
+
     </div>
 
-    <!-- مودال رفع الواجب -->
+
+
+    <!-- مودال رفع الواجب - صورة فقط عبر Cloudinary -->
+
     <div id="submitModal" class="submit-modal" onclick="closeSubmitModal(event)">
+
         <div class="submit-modal-content" onclick="event.stopPropagation()">
+
             <button class="submit-modal-close" onclick="closeSubmitModal()">✕</button>
-            <h3 class="text-xl font-bold mb-4 text-center">📤 رفع الواجب</h3>
+
+            <h3 class="text-xl font-bold mb-4 text-center">📤 رفع الواجب (صورة)</h3>
+
             <form id="submitForm">
+
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">رابط ملف الواجب (Google Drive) *</label>
-                    <input type="url" id="fileUrlInput" placeholder="https://drive.google.com/..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+
+                    <label class="block text-sm font-medium text-gray-700 mb-2">📸 صورة الواجب *</label>
+
+                    <div class="flex flex-col gap-2">
+
+                        <button type="button" id="uploadImageBtn" class="cloudinary-upload-btn">
+
+                            <i class="fas fa-cloud-upload-alt"></i> رفع صورة من جهازك
+
+                        </button>
+
+                        <div id="imageUploadStatus" class="upload-status"></div>
+
+                        <div id="imagePreview" class="upload-preview"></div>
+
+                    </div>
+
                 </div>
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">رابط صورة توضيحية (اختياري)</label>
-                    <input type="url" id="imageUrlInput" placeholder="https://drive.google.com/..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                </div>
+
                 <button type="submit" id="submitTaskBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-bold transition-colors">📤 تسليم الواجب</button>
+
             </form>
+
         </div>
+
     </div>
+
+
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
     <script>
+
+        // ===== Firebase Config =====
+
         const firebaseConfig = {
+
             apiKey: "AIzaSyDQ8LFihzOPueW0_FCgRF6uEiAMgn24sF8",
+
             authDomain: "nemo-8d0c7.firebaseapp.com",
+
             projectId: "nemo-8d0c7",
+
             storageBucket: "nemo-8d0c7.firebasestorage.app",
+
             messagingSenderId: "585101385202",
+
             appId: "1:585101385202:web:fb703a536893fb4aaadf6b"
+
         };
+
         firebase.initializeApp(firebaseConfig);
+
         const auth = firebase.auth();
+
         const db = firebase.firestore();
 
+
+
+        // ===== Cloudinary Configuration =====
+
+        const CLOUDINARY_CLOUD_NAME = 'dqns1nxjc';
+
+        const CLOUDINARY_UPLOAD_PRESET = 'nemo_uploads';
+
+
+
         const CURRENT_SUBJECT = "programming";
+
         let currentGrade = "course";
+
         let currentTab = "lesson";
+
         let isActivated = false;
 
+        let uploadedImageUrl = '';
+
+
+
         const tabBtns = document.querySelectorAll('.tab-btn');
+
         const contentGrid = document.getElementById('contentGrid');
+
         const sectionTitle = document.getElementById('sectionTitle');
+
         const payButton = document.getElementById('payButton');
+
         const paymentAlert = document.getElementById('paymentAlert');
+
         const activationCodeInput = document.getElementById('activationCodeInput');
+
         const submitCodeBtn = document.getElementById('submitCodeBtn');
+
         const payButtonContainer = document.getElementById('payButtonContainer');
 
+
+
         const videoModal = document.getElementById('videoModal');
-        const videoModalWrapper = document.getElementById('videoModalIframeWrapper');
+
+        const videoModalContainer = document.getElementById('videoModalContainer');
+
+
 
         const detailsModal = document.getElementById('detailsModal');
+
         const detailsContent = document.getElementById('detailsContent');
 
+
+
         const submitModal = document.getElementById('submitModal');
-        const imageUrlInput = document.getElementById('imageUrlInput');
-        const fileUrlInput = document.getElementById('fileUrlInput');
+
         const submitForm = document.getElementById('submitForm');
 
-        // ===== المتغيرات العامة =====
+
+
         let tasksData = {};
+
         let submissionsMap = {};
 
+
+
         const tabMeta = {
+
             lessons: { type: "lesson", title: "محاضرات كورس البرمجة", icon: "fa-video", color: "text-red-600", btnText: "تشغيل الفيديو", btnIcon: "fa-play-circle" },
+
             exercises: { type: "exercise", title: "التدريبات البرمجية", icon: "fa-pen-fancy", color: "text-blue-600", btnText: "تحميل التدريب", btnIcon: "fa-download" },
+
             files: { type: "file", title: "الملخصات والمذكرات", icon: "fa-file-pdf", color: "text-purple-600", btnText: "تحميل المذكرة", btnIcon: "fa-download" },
+
             assignments: { type: "assignment", title: "الواجبات", icon: "fa-tasks", color: "text-green-600", btnText: "تسليم الواجب", btnIcon: "fa-upload" }
+
         };
+
+
 
         // ===== دوال مساعدة =====
+
         function getEmbedUrl(url) {
+
             if (!url) return '';
-            if (url.includes('youtube.com/watch?v=')) {
-                return url.replace('watch?v=', 'embed/');
-            }
+
+            if (url.includes('youtube.com/watch?v=')) return url.replace('watch?v=', 'embed/');
+
             if (url.includes('youtu.be/')) {
+
                 const id = url.split('youtu.be/')[1].split('?')[0];
+
                 return `https://www.youtube.com/embed/${id}`;
+
             }
+
             if (url.includes('drive.google.com')) {
-                let match = url.match(/\/file\/d\/([^\/]+)/);
-                if (match) {
-                    return `https://drive.google.com/file/d/${match[1]}/preview`;
-                }
-                if (url.includes('/preview') || url.includes('embed')) {
-                    return url;
-                }
+
+                const match = url.match(/\/file\/d\/([^\/]+)/);
+
+                if (match) return `https://drive.google.com/file/d/${match[1]}/preview`;
+
+                if (url.includes('/preview') || url.includes('embed')) return url;
+
             }
+
             return url;
+
         }
 
-        // ===== مودال الفيديو =====
-        function openVideoModal(videoUrl) {
-            if (!videoUrl) return alert("⚠️ رابط الفيديو غير متوفر");
-            const embedUrl = getEmbedUrl(videoUrl);
-            videoModalWrapper.innerHTML = `<iframe src="${embedUrl}" allowfullscreen></iframe>`;
-            videoModal.classList.add('active');
-            document.body.style.overflow = 'hidden';
+
+
+        function isCloudinaryUrl(url) {
+
+            if (!url) return false;
+
+            return url.includes('cloudinary.com') || url.includes('res.cloudinary.com') || url.includes('cloudinary');
+
         }
+
+
+
+        // ===== مودال الفيديو مع دعم Cloudinary =====
+
+        function openVideoModal(videoUrl) {
+
+            if (!videoUrl) return alert("⚠️ رابط الفيديو غير متوفر");
+
+            
+
+            videoModalContainer.innerHTML = '';
+
+            
+
+            const isCloudinary = isCloudinaryUrl(videoUrl);
+
+            const embedUrl = getEmbedUrl(videoUrl);
+
+            
+
+            if (isCloudinary) {
+
+                videoModalContainer.className = 'video-modal-player';
+
+                videoModalContainer.innerHTML = `
+
+                    <video controls autoplay style="width:100%; border-radius:12px; max-height:80vh;">
+
+                        <source src="${videoUrl}" type="video/mp4">
+
+                        <source src="${videoUrl}" type="video/webm">
+
+                        متصفحك لا يدعم تشغيل الفيديو.
+
+                    </video>
+
+                `;
+
+            } else {
+
+                videoModalContainer.className = 'video-modal-iframe';
+
+                videoModalContainer.innerHTML = `<iframe src="${embedUrl}" allowfullscreen></iframe>`;
+
+            }
+
+            
+
+            videoModal.classList.add('active');
+
+            document.body.style.overflow = 'hidden';
+
+        }
+
+
 
         function closeVideoModal(event) {
+
             if (event && event.target !== event.currentTarget) return;
+
             videoModal.classList.remove('active');
-            videoModalWrapper.innerHTML = '';
+
+            videoModalContainer.innerHTML = '';
+
+            videoModalContainer.className = 'video-modal-iframe';
+
             document.body.style.overflow = '';
+
         }
 
-        // ===== مودال التفاصيل (باستخدام taskId) =====
+
+
+        // ===== رفع الصورة عبر Cloudinary =====
+
+        function setupImageUpload() {
+
+            const uploadBtn = document.getElementById('uploadImageBtn');
+
+            const statusEl = document.getElementById('imageUploadStatus');
+
+            const previewEl = document.getElementById('imagePreview');
+
+
+
+            uploadBtn.addEventListener('click', () => {
+
+                if (!auth.currentUser) {
+
+                    alert('يرجى تسجيل الدخول أولاً');
+
+                    return;
+
+                }
+
+
+
+                const widget = cloudinary.createUploadWidget(
+
+                    {
+
+                        cloudName: CLOUDINARY_CLOUD_NAME,
+
+                        uploadPreset: CLOUDINARY_UPLOAD_PRESET,
+
+                        sources: ['local', 'url', 'camera'],
+
+                        multiple: false,
+
+                        maxFiles: 1,
+
+                        resourceType: 'image',
+
+                        clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+
+                        maxFileSize: 10485760, // 10MB
+
+                        folder: `nemo/${CURRENT_SUBJECT}/${auth.currentUser.uid}/assignments`,
+
+                        tags: [CURRENT_SUBJECT, 'assignment', auth.currentUser.uid],
+
+                        publicId: `assignment_${Date.now()}`,
+
+                        styles: {
+
+                            palette: {
+
+                                window: '#FFFFFF',
+
+                                sourceBg: '#F4F6F8',
+
+                                windowBorder: '#90A0B3',
+
+                                tabIcon: '#0094FF',
+
+                                inactiveTabIcon: '#69778A',
+
+                                menuIcons: '#0094FF',
+
+                                link: '#53ADFF',
+
+                                action: '#8F5DA5',
+
+                                inProgress: '#0194FF',
+
+                                complete: '#53ADFF',
+
+                                error: '#F15835',
+
+                                textDark: '#000000',
+
+                                textLight: '#FFFFFF'
+
+                            },
+
+                            fonts: {
+
+                                default: {
+
+                                    active: true
+
+                                }
+
+                            }
+
+                        }
+
+                    },
+
+                    (error, result) => {
+
+                        if (error) {
+
+                            console.error('Cloudinary Error:', error);
+
+                            statusEl.textContent = '❌ فشل الرفع: ' + error.message;
+
+                            statusEl.className = 'upload-status error';
+
+                            return;
+
+                        }
+
+
+
+                        if (result.event === 'success') {
+
+                            const url = result.info.secure_url || result.info.url;
+
+                            uploadedImageUrl = url;
+
+                            
+
+                            // عرض الصورة في المعاينة
+
+                            previewEl.innerHTML = `
+
+                                <div class="flex items-center justify-between">
+
+                                    <span>✅ تم رفع الصورة بنجاح!</span>
+
+                                    <span class="text-green-600 text-sm">${(result.info.bytes / 1024).toFixed(1)} KB</span>
+
+                                </div>
+
+                                <img src="${url}" alt="صورة الواجب" class="mt-2 rounded-lg shadow-md max-h-48 w-auto">
+
+                            `;
+
+                            previewEl.className = 'upload-preview show';
+
+                            statusEl.textContent = '✅ تم رفع الصورة بنجاح!';
+
+                            statusEl.className = 'upload-status success';
+
+                        }
+
+                    }
+
+                );
+
+                widget.open();
+
+            });
+
+        }
+
+
+
+        // ===== مودال التفاصيل =====
+
         function openDetailsModal(taskId) {
+
             const task = tasksData[taskId];
-            if (!task) {
-                alert('⚠️ بيانات الواجب غير متوفرة');
-                return;
-            }
+
+            if (!task) return alert('⚠️ بيانات الواجب غير متوفرة');
+
             const submission = task.submission;
 
+
+
             let html = `
+
                 <div class="mb-4">
+
                     <h4 class="font-bold text-lg">${task.title || 'بدون عنوان'}</h4>
+
                     ${task.createdAt ? `<p class="text-sm text-gray-500"><i class="far fa-calendar-alt"></i> تاريخ النشر: ${task.createdAt}</p>` : ''}
+
                     ${task.deadline ? `<p class="text-sm text-gray-500"><i class="far fa-clock"></i> آخر موعد: ${task.deadline}</p>` : ''}
+
                     <p class="text-gray-600 mt-2">${task.description || 'لا يوجد وصف'}</p>
+
                     ${task.teacherNote ? `<p class="mt-2 text-sm bg-yellow-50 p-2 rounded border-r-4 border-yellow-400"><i class="fas fa-chalkboard-teacher text-yellow-600"></i> ملاحظة المدرس: ${task.teacherNote}</p>` : ''}
+
                 </div>
+
             `;
+
             if (submission) {
-                const statusMap = {
-                    'pending': '🟡 قيد المراجعة',
-                    'reviewed': '🔵 تم المراجعة',
-                    'completed': '🟢 مكتمل'
-                };
+
+                const statusMap = { 'pending': '🟡 قيد المراجعة', 'reviewed': '🔵 تم المراجعة', 'completed': '🟢 مكتمل' };
+
                 const statusClass = submission.status || 'pending';
-                const fileLink = submission.driveLink || submission.fileUrl || '';
+
+                const imageUrl = submission.imageUrl || '';
+
                 html += `
+
                     <div class="border-t pt-3 mt-2">
+
                         <p><span class="font-semibold">حالة التسليم:</span> <span class="task-status ${statusClass}">${statusMap[statusClass] || '🟡 قيد المراجعة'}</span></p>
+
                         ${submission.teacherNote ? `<p class="mt-1 text-sm bg-blue-50 p-2 rounded border-r-4 border-blue-400"><i class="fas fa-comment text-blue-600"></i> ملاحظة المدرس: ${submission.teacherNote}</p>` : ''}
-                        <div class="mt-2 space-y-1">
-                            ${fileLink ? `<a href="${fileLink}" target="_blank" class="text-blue-600 underline block"><i class="fas fa-file"></i> ملف الواجب</a>` : ''}
-                            ${submission.imageUrl ? `<a href="${submission.imageUrl}" target="_blank" class="text-blue-600 underline block"><i class="fas fa-image"></i> صورة توضيحية</a>` : ''}
-                        </div>
+
+                        ${imageUrl ? `
+
+                            <div class="mt-2">
+
+                                <p class="font-semibold text-sm">📸 صورة الواجب:</p>
+
+                                <a href="${imageUrl}" target="_blank" class="block mt-1">
+
+                                    <img src="${imageUrl}" alt="صورة الواجب" class="max-h-64 rounded-lg shadow-md border hover:shadow-lg transition-shadow">
+
+                                </a>
+
+                            </div>
+
+                        ` : ''}
+
                     </div>
+
                 `;
+
             } else {
-                html += `
-                    <div class="border-t pt-3 mt-2 text-gray-500">
-                        <p><i class="fas fa-hourglass-half"></i> لم تقم بتسليم هذا الواجب بعد.</p>
-                    </div>
-                `;
+
+                html += `<div class="border-t pt-3 mt-2 text-gray-500"><p><i class="fas fa-hourglass-half"></i> لم تقم بتسليم هذا الواجب بعد.</p></div>`;
+
             }
+
             detailsContent.innerHTML = html;
+
             detailsModal.classList.add('active');
+
             document.body.style.overflow = 'hidden';
+
         }
+
+
 
         function closeDetailsModal(event) {
+
             if (event && event.target !== event.currentTarget) return;
+
             detailsModal.classList.remove('active');
+
             document.body.style.overflow = '';
+
         }
+
+
 
         // ===== مودال رفع الواجب =====
+
         let currentTaskId = null;
 
+
+
         function openSubmitModal(taskId) {
+
             currentTaskId = taskId;
+
+            uploadedImageUrl = '';
+
             submitModal.classList.add('active');
+
             document.body.style.overflow = 'hidden';
-            imageUrlInput.value = '';
-            fileUrlInput.value = '';
+
+            
+
+            // إعادة تعيين الحقول
+
+            document.getElementById('imageUploadStatus').textContent = '';
+
+            document.getElementById('imageUploadStatus').className = 'upload-status';
+
+            document.getElementById('imagePreview').className = 'upload-preview';
+
+            document.getElementById('imagePreview').innerHTML = '';
+
         }
+
+
 
         function closeSubmitModal(event) {
+
             if (event && event.target !== event.currentTarget) return;
+
             submitModal.classList.remove('active');
+
             document.body.style.overflow = '';
+
             currentTaskId = null;
+
         }
 
-        // ===== تعديل: حفظ التسليم مع taskTitle و studentName =====
+
+
+        // ===== حفظ التسليم =====
+
         submitForm.addEventListener('submit', async (e) => {
+
             e.preventDefault();
+
             if (!currentTaskId) return alert('خطأ: لم يتم تحديد الواجب.');
+
             if (!auth.currentUser) return alert('يرجى تسجيل الدخول أولاً.');
-            const fileUrl = fileUrlInput.value.trim();
-            const imageUrl = imageUrlInput.value.trim();
-            if (!fileUrl) return alert('يرجى إدخال رابط ملف الواجب.');
 
-            // جلب اسم الطالب
+            
+
+            if (!uploadedImageUrl) return alert('⚠️ يرجى رفع صورة الواجب أولاً عبر زر "رفع صورة من جهازك".');
+
+
+
             let studentName = auth.currentUser.displayName || auth.currentUser.email || 'طالب';
-            // (يمكن تحسينه بجلب من users collection إذا كان لديك اسم محدد)
 
-            // جلب عنوان الواجب من tasksData
             const taskData = tasksData[currentTaskId];
+
             const taskTitle = taskData ? taskData.title : 'بدون عنوان';
 
+
+
             try {
+
                 await db.collection('submissions').add({
+
                     taskId: currentTaskId,
-                    taskTitle: taskTitle,          // إضافة
+
+                    taskTitle: taskTitle,
+
                     studentId: auth.currentUser.uid,
-                    studentName: studentName,      // إضافة
+
+                    studentName: studentName,
+
                     userEmail: auth.currentUser.email || 'unknown',
+
                     subject: CURRENT_SUBJECT,
+
                     grade: currentGrade,
-                    driveLink: fileUrl,
-                    imageUrl: imageUrl || '',
+
+                    imageUrl: uploadedImageUrl,
+
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+
                     status: 'pending',
+
                     teacherNote: ''
+
                 });
+
                 alert('✅ تم رفع الواجب بنجاح! سيتم مراجعته قريباً.');
+
                 closeSubmitModal();
+
                 loadSubjectContent();
+
             } catch (err) {
+
                 console.error(err);
+
                 alert('❌ حدث خطأ أثناء رفع الواجب، حاول مرة أخرى.');
+
             }
+
         });
+
+
 
         // ===== تبديل التبويبات =====
+
         tabBtns.forEach(btn => {
+
             btn.addEventListener('click', () => {
+
                 const target = btn.getAttribute('data-tab');
+
                 if (target === 'exams') {
-                    window.location.href = 'exams.html';
+
+                    window.location.href = 'exam-list.html';
+
                     return;
+
                 }
+
                 tabBtns.forEach(b => b.classList.remove('active-tab'));
+
                 btn.classList.add('active-tab');
 
+
+
                 const meta = tabMeta[target];
+
                 if (!meta) return;
+
                 currentTab = meta.type;
+
                 sectionTitle.innerHTML = `<i class="fas ${meta.icon} mr-2 ${meta.color}"></i> ${meta.title}`;
+
                 loadSubjectContent();
+
             });
+
         });
+
+
 
         // ===== تحميل المحتوى =====
+
         async function loadSubjectContent() {
+
             contentGrid.innerHTML = '<p class="text-gray-500 col-span-full text-center py-10">⏳ جاري تحميل المحتوى...</p>';
+
             try {
+
                 if (currentTab === 'assignment') {
-                    // استعلام بدون orderBy لتجنب الحاجة إلى Index
+
                     const snapshot = await db.collection('tasks')
+
                         .where('grade', '==', currentGrade)
+
                         .where('subjectId', '==', CURRENT_SUBJECT)
+
                         .where('status', '==', 'active')
+
                         .get();
 
+
+
                     if (snapshot.empty) {
+
                         contentGrid.innerHTML = '<p class="text-gray-500 col-span-full text-center py-10">📁 لا توجد واجبات حالياً.</p>';
+
                         const meta = tabMeta.assignments;
+
                         sectionTitle.innerHTML = `<i class="fas ${meta.icon} mr-2 ${meta.color}"></i> ${meta.title} <span class="badge">0</span>`;
+
                         return;
+
                     }
 
-                    // تخزين البيانات في tasksData
+
+
                     tasksData = {};
+
                     const tasks = [];
+
                     snapshot.forEach(doc => {
+
                         const data = doc.data();
+
                         tasksData[doc.id] = {
+
                             id: doc.id,
+
                             title: data.title || 'بدون عنوان',
+
                             description: data.description || '',
+
                             teacherNote: data.teacherNote || '',
+
                             deadline: data.deadline || '',
+
                             createdAt: data.createdAt || '',
+
                             submission: null
+
                         };
+
                         tasks.push({ id: doc.id, ...data });
+
                     });
 
-                    // جلب التسليمات
+
+
                     const user = auth.currentUser;
+
                     if (!user) return;
+
                     const taskIds = tasks.map(t => t.id);
+
                     submissionsMap = {};
+
                     if (taskIds.length > 0) {
-                        // البحث باستخدام studentId (الجديد) أولاً، ثم userId (القديم)
+
                         let subsSnap = await db.collection('submissions')
+
                             .where('studentId', '==', user.uid)
+
                             .where('taskId', 'in', taskIds)
+
                             .get();
+
                         if (subsSnap.empty) {
+
                             subsSnap = await db.collection('submissions')
+
                                 .where('userId', '==', user.uid)
+
                                 .where('taskId', 'in', taskIds)
+
                                 .get();
+
                         }
+
                         subsSnap.forEach(doc => {
+
                             const data = doc.data();
+
                             submissionsMap[data.taskId] = { id: doc.id, ...data };
+
                             if (tasksData[data.taskId]) {
+
                                 tasksData[data.taskId].submission = submissionsMap[data.taskId];
+
                             }
+
                         });
+
                     }
 
-                    // ترتيب المهام: غير المسلمة أولاً
+
+
                     tasks.sort((a, b) => {
+
                         const aSubmitted = !!submissionsMap[a.id];
+
                         const bSubmitted = !!submissionsMap[b.id];
+
                         if (!aSubmitted && bSubmitted) return -1;
+
                         if (aSubmitted && !bSubmitted) return 1;
+
                         return 0;
+
                     });
 
-                    // تحديث Badge
+
+
                     const totalTasks = tasks.length;
+
                     const submittedCount = Object.keys(submissionsMap).length;
+
                     const notSubmittedCount = totalTasks - submittedCount;
+
                     const meta = tabMeta.assignments;
+
                     let badgeHtml = `<span class="badge">${totalTasks}</span>`;
+
                     if (notSubmittedCount > 0) {
+
                         badgeHtml += ` <span class="badge badge-new">${notSubmittedCount} جديدة</span>`;
+
                     }
+
                     sectionTitle.innerHTML = `<i class="fas ${meta.icon} mr-2 ${meta.color}"></i> ${meta.title} ${badgeHtml}`;
 
-                    // عرض القائمة
+
+
                     contentGrid.className = 'grid grid-cols-1 gap-1';
+
                     contentGrid.innerHTML = '';
+
+
 
                     tasks.forEach(task => {
+
                         const taskId = task.id;
+
                         const submission = submissionsMap[taskId] || null;
 
+
+
                         let statusHtml = '';
+
                         let actionButtons = '';
+
                         let notSubmittedClass = '';
 
-                        // تاريخ التسليم بالألوان
+
+
                         let deadlineHtml = '';
+
                         if (task.deadline) {
+
                             const now = new Date();
+
                             const deadlineDate = new Date(task.deadline);
+
                             const diff = (deadlineDate - now) / (1000 * 60 * 60 * 24);
+
                             let colorClass = 'deadline-far';
+
                             let icon = '🟢';
+
                             if (diff < 0) { colorClass = 'deadline-overdue'; icon = '🔴'; }
+
                             else if (diff <= 1) { colorClass = 'deadline-close'; icon = '🟠'; }
+
                             deadlineHtml = `<span class="${colorClass}">${icon} ${task.deadline}</span>`;
+
                         } else {
+
                             deadlineHtml = `<span class="text-gray-400">بدون موعد</span>`;
+
                         }
+
+
 
                         if (submission) {
+
                             const status = submission.status || 'pending';
-                            const statusMap = {
-                                'pending': '🟡 قيد المراجعة',
-                                'reviewed': '🔵 تم المراجعة',
-                                'completed': '🟢 مكتمل'
-                            };
+
+                            const statusMap = { 'pending': '🟡 قيد المراجعة', 'reviewed': '🔵 تم المراجعة', 'completed': '🟢 مكتمل' };
+
                             const statusClass = status;
+
                             statusHtml = `<span class="task-status ${statusClass}">${statusMap[status]}</span>`;
+
                             actionButtons = `
+
                                 <button onclick="openDetailsModal('${taskId}')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-sm font-medium">
+
                                     <i class="fas fa-eye"></i> عرض التسليم
+
                                 </button>
+
                             `;
+
                         } else {
+
                             notSubmittedClass = 'not-submitted';
+
                             statusHtml = `<span class="task-status not-submitted">🔴 لم يسلم</span>`;
+
                             actionButtons = `
+
                                 <button onclick="openDetailsModal('${taskId}')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-sm font-medium">
+
                                     <i class="fas fa-info-circle"></i> تفاصيل
+
                                 </button>
+
                                 <button onclick="openSubmitModal('${taskId}')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm font-medium">
+
                                     <i class="fas fa-upload"></i> تسليم الواجب
+
                                 </button>
+
                             `;
+
                         }
 
+
+
                         const item = document.createElement('div');
+
                         item.className = `task-list-item ${notSubmittedClass}`;
+
                         item.innerHTML = `
+
                             <div class="task-title-wrapper">
+
                                 <div class="task-title">${task.title || 'بدون عنوان'}</div>
+
                                 <div class="task-deadline"><i class="far fa-calendar-alt"></i> ${deadlineHtml}</div>
+
                             </div>
+
                             <div class="flex items-center gap-2">
+
                                 ${statusHtml}
+
                                 <div class="task-actions">${actionButtons}</div>
+
                             </div>
+
                         `;
+
                         contentGrid.appendChild(item);
+
                     });
+
                 } else {
-                    // باقي التبويبات (دروس، تدريبات، ملفات)
+
                     contentGrid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6';
+
                     const snapshot = await db.collection('content')
+
                         .where('grade', '==', currentGrade)
+
                         .where('subject', '==', CURRENT_SUBJECT)
+
                         .where('contentType', '==', currentTab)
+
                         .get();
+
                     if (snapshot.empty) {
+
                         contentGrid.innerHTML = '<p class="text-gray-500 col-span-full text-center py-10">📁 لا يوجد محتوى متوفر حالياً في هذا القسم.</p>';
+
                         return;
+
                     }
+
                     contentGrid.innerHTML = '';
+
                     const activeKey = Object.keys(tabMeta).find(k => tabMeta[k].type === currentTab);
+
                     const meta = tabMeta[activeKey];
 
+
+
                     snapshot.forEach(doc => {
+
                         const data = doc.data();
+
                         const card = document.createElement('div');
+
                         card.className = "lesson-card bg-white rounded-lg shadow-md overflow-hidden relative";
 
+
+
                         let icon = currentTab === 'lesson' ? 'fa-video' : (currentTab === 'exercise' ? 'fa-pen-ruler' : 'fa-file-pdf');
+
                         let overlay = !isActivated ? `<div class="locked-overlay"><i class="fas fa-lock text-3xl mb-2"></i><span>محتوى مقفل</span></div>` : '';
+
                         let mediaArea = `<div class="preview-icon"><i class="fas ${icon} fa-4x"></i>${overlay}</div>`;
 
+
+
                         const actionDisabled = !isActivated ? 'disabled' : '';
+
                         const videoUrl = data.mediaUrl || '';
+
                         const btnOnClick = isActivated ? `handleAction('${videoUrl}')` : `alert('🔐 فعّل حسابك أولاً')`;
 
+
+
                         card.innerHTML = `
+
                             ${mediaArea}
+
                             <div class="p-4">
+
                                 <h3 class="font-bold text-lg mb-1">${data.title || 'بدون عنوان'}</h3>
+
                                 <p class="text-gray-600 text-sm mb-2"><i class="far fa-clock"></i> متاح فور التفعيل</p>
+
                                 <div class="flex justify-between">
+
                                     <span class="text-sm text-gray-500"><i class="fas ${meta.icon}"></i> كورس البرمجة</span>
+
                                     <button onclick="${btnOnClick}" class="${meta.color} text-sm font-medium action-btn" ${actionDisabled}>
+
                                         <i class="fas ${meta.btnIcon}"></i> ${meta.btnText}
+
                                     </button>
+
                                 </div>
+
                             </div>
+
                         `;
+
                         contentGrid.appendChild(card);
+
                     });
+
                 }
+
             } catch (err) {
+
                 console.error(err);
+
                 contentGrid.innerHTML = '<p class="text-red-500 text-center">❌ خطأ في التحميل</p>';
+
             }
+
         }
+
+
 
         window.handleAction = (url) => {
+
             if (!isActivated) {
+
                 alert("🔐 فعّل حسابك أولاً");
+
                 return;
+
             }
+
             if (currentTab === 'lesson') {
+
                 openVideoModal(url);
+
             } else {
+
                 if (url) window.open(url, '_blank');
+
                 else alert("⚠️ لا يوجد رابط لهذا المحتوى");
+
             }
+
         };
 
+
+
         function unlockUI() { isActivated = true; paymentAlert.classList.add('hidden'); payButtonContainer.classList.add('hidden'); loadSubjectContent(); }
+
         function lockUI() { isActivated = false; paymentAlert.classList.remove('hidden'); payButtonContainer.classList.remove('hidden'); loadSubjectContent(); }
+
         function setControls(enabled) { activationCodeInput.disabled = !enabled; submitCodeBtn.disabled = !enabled; }
 
+
+
         async function checkUserActivation(uid) {
+
             try {
+
                 const userRef = db.collection('users').doc(uid);
+
                 const snap = await userRef.get();
+
                 if (snap.exists && snap.data().isActivated === true) {
+
                     isActivated = true;
+
                     unlockUI();
+
                 } else {
+
                     if (!snap.exists) await userRef.set({ grade: currentGrade, isActivated: false, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+
                     isActivated = false;
+
                     lockUI();
+
                 }
+
             } catch(e) { console.error(e); lockUI(); }
+
             setControls(true);
+
         }
 
+
+
         submitCodeBtn.addEventListener('click', async () => {
+
             const enteredCode = activationCodeInput.value.trim().toUpperCase();
+
             if (!enteredCode) return alert("📝 أدخل كود التفعيل الخاص بكورس البرمجة");
+
             if (!auth.currentUser) return alert("يرجى تسجيل الدخول أولاً");
 
+
+
             try {
+
                 const codesRef = db.collection('activation_codes');
+
                 const q = codesRef.where('code', '==', enteredCode).where('used', '==', false).limit(1);
+
                 const querySnap = await q.get();
+
                 if (querySnap.empty) return alert("❌ كود غير صحيح أو تم استخدامه من قبل");
+
                 const codeDoc = querySnap.docs[0];
+
                 await codeDoc.ref.update({
+
                     used: true,
+
                     usedBy: auth.currentUser.email || auth.currentUser.uid,
+
                     usedAt: firebase.firestore.FieldValue.serverTimestamp()
+
                 });
+
                 await db.collection('users').doc(auth.currentUser.uid).set({ isActivated: true, grade: currentGrade }, { merge: true });
+
                 isActivated = true;
+
                 unlockUI();
+
                 alert("✅ تم تفعيل كورس البرمجة بنجاح!");
+
                 activationCodeInput.value = '';
+
             } catch (err) {
+
                 console.error(err);
+
                 alert("⚠️ حدث خطأ أثناء التفعيل، حاول مرة أخرى");
+
             }
+
         });
+
+
 
         payButton.addEventListener('click', () => {
+
             let email = auth.currentUser?.email;
+
             if (!email) email = prompt("📧 بريدك الإلكتروني لإرساله للمدرس:");
+
             if (email) window.open(`https://wa.me/01211493385?text=${encodeURIComponent(`اريد شراء كود تفعيل - كورس البرمجة\nالايميل: ${email}`)}`, '_blank');
+
         });
 
+
+
+        // ===== تهيئة الصفحة =====
+
         auth.onAuthStateChanged(async (user) => {
+
             if (!user) { alert("يرجى تسجيل الدخول أولاً"); window.location.href = "../index.html"; return; }
+
             await checkUserActivation(user.uid);
+
+            setupImageUpload();
+
         });
+
     </script>
+
 </body>
+
 </html>

@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>لوحة تحكم الأدمن - نتائج الطلاب</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #f0f2f7;
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        /* ===== Header ===== */
+        .admin-header {
+            background: #ffffff;
+            padding: 20px 30px;
+            border-radius: 20px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            border-right: 6px solid #b22234;
+        }
+
+        .admin-header h1 {
+            font-size: 26px;
+            color: #0b1e3a;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .admin-header h1 span {
+            background: #b22234;
+            color: white;
+            font-size: 14px;
+            padding: 4px 16px;
+            border-radius: 40px;
+            font-weight: 500;
+        }
+
+        .admin-header .admin-badge {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f8faff;
+            padding: 8px 20px;
+            border-radius: 40px;
+            border: 1px solid #edf2f9;
+        }
+
+        .admin-header .admin-badge .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #0b1e3a;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .admin-header .admin-badge .name {
+            font-weight: 600;
+            color: #0b1e3a;
+        }
+
+        .admin-header .admin-badge .role {
+            font-size: 13px;
+            color: #6b7f9e;
+        }
+
+        /* ===== Filters ===== */
+        .filters {
+            background: white;
+            border-radius: 16px;
+            padding: 18px 25px;
+            margin-bottom: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .filters select, .filters input {
+            padding: 10px 18px;
+            border-radius: 12px;
+            border: 2px solid #e9ecf3;
+            font-size: 14px;
+            background: #f8faff;
+            color: #0b1e3a;
+            outline: none;
+            transition: 0.15s;
+            min-width: 180px;
+        }
+
+        .filters select:focus, .filters input:focus {
+            border-color: #0b1e3a;
+        }
+
+        .filters label {
+            font-weight: 600;
+            color: #2d405b;
+            font-size: 14px;
+        }
+
+        /* ===== Stats Cards ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 18px 22px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border-right: 4px solid #0b1e3a;
+        }
+
+        .stat-card .stat-number {
+            font-size: 28px;
+            font-weight: 800;
+            color: #0b1e3a;
+        }
+
+        .stat-card .stat-label {
+            font-size: 13px;
+            color: #6b7f9e;
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
+        /* ===== Table ===== */
+        .table-container {
+            background: white;
+            border-radius: 20px;
+            padding: 20px 0;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: 0 25px 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            border-bottom: 2px solid #f0f2f7;
+        }
+
+        .table-header h2 {
+            font-size: 18px;
+            color: #0b1e3a;
+        }
+
+        .table-header .results-count {
+            font-size: 14px;
+            color: #6b7f9e;
+            background: #f8faff;
+            padding: 4px 16px;
+            border-radius: 40px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            padding: 0 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead {
+            background: #f8faff;
+            border-bottom: 2px solid #e9ecf3;
+        }
+
+        thead th {
+            padding: 14px 16px;
+            text-align: right;
+            font-weight: 700;
+            color: #2d405b;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #f0f2f7;
+            transition: 0.1s;
+        }
+
+        tbody tr:hover {
+            background: #f8faff;
+        }
+
+        tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        tbody td {
+            padding: 14px 16px;
+            color: #1f2d4a;
+            vertical-align: middle;
+        }
+
+        .rank-cell {
+            font-weight: 700;
+            font-size: 16px;
+            color: #0b1e3a;
+            text-align: center;
+        }
+
+        .rank-cell.gold {
+            color: #c9a83e;
+        }
+        .rank-cell.silver {
+            color: #9aa6b8;
+        }
+        .rank-cell.bronze {
+            color: #cd7f32;
+        }
+
+        .student-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .student-cell .student-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #e9ecf3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #0b1e3a;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .student-cell .student-info .name {
+            font-weight: 600;
+            color: #0b1e3a;
+        }
+
+        .student-cell .student-info .email {
+            font-size: 12px;
+            color: #6b7f9e;
+        }
+
+        .score-cell {
+            font-weight: 700;
+            font-size: 16px;
+            color: #0b1e3a;
+        }
+
+        .score-cell .total {
+            font-weight: 400;
+            color: #6b7f9e;
+            font-size: 14px;
+        }
+
+        .percentage-cell {
+            font-weight: 700;
+        }
+
+        .percentage-cell.high {
+            color: #1f7b4a;
+        }
+        .percentage-cell.medium {
+            color: #c9a83e;
+        }
+        .percentage-cell.low {
+            color: #b22234;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 40px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-badge.completed {
+            background: #e6f0e9;
+            color: #1f7b4a;
+        }
+
+        .status-badge.in-progress {
+            background: #f5e6a3;
+            color: #8a7a2a;
+        }
+
+        .status-badge.stopped {
+            background: #fce9e9;
+            color: #b22234;
+        }
+
+        .exam-name-cell {
+            font-weight: 500;
+            color: #0b1e3a;
+        }
+
+        .exam-name-cell .subject {
+            font-size: 12px;
+            color: #6b7f9e;
+            font-weight: 400;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 50px 20px;
+            color: #6b7f9e;
+        }
+
+        .no-results .icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        /* ===== Loading ===== */
+        .loading-state {
+            text-align: center;
+            padding: 50px 20px;
+        }
+
+        .loading-state .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #dce3ef;
+            border-top: 4px solid #b22234;
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+            margin-bottom: 18px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+            .admin-header {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+            }
+            .admin-header .admin-badge {
+                justify-content: center;
+            }
+            .filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .filters select, .filters input {
+                width: 100%;
+                min-width: unset;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .table-header {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+            }
+            .student-cell .student-info .email {
+                display: none;
+            }
+            tbody td {
+                padding: 10px 10px;
+                font-size: 13px;
+            }
+            thead th {
+                padding: 10px 10px;
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            body {
+                padding: 15px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ===== HEADER ===== -->
+        <header class="admin-header">
+            <h1>
+                📊 لوحة تحكم الأدمن
+                <span>نتائج الطلاب</span>
+            </h1>
+            <div class="admin-badge">
+                <div class="avatar">أ</div>
+                <div>
+                    <div class="name" id="adminName">أدمن النظام</div>
+                    <div class="role">مدير الامتحانات</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ===== FILTERS ===== -->
+        <div class="filters">
+            <div>
+                <label>📚 الامتحان</label>
+                <select id="examFilter">
+                    <option value="all">جميع الامتحانات</option>
+                </select>
+            </div>
+            <div>
+                <label>📋 الحالة</label>
+                <select id="statusFilter">
+                    <option value="all">الكل</option>
+                    <option value="completed">مكتمل</option>
+                    <option value="in_progress">قيد التنفيذ</option>
+                    <option value="stopped">متوقف</option>
+                </select>
+            </div>
+            <div>
+                <label>🔍 بحث</label>
+                <input type="text" id="searchInput" placeholder="اسم الطالب أو البريد..." />
+            </div>
+            <button onclick="loadResults()" style="padding:10px 25px; background:#0b1e3a; color:white; border:none; border-radius:12px; font-weight:600; cursor:pointer;">
+                🔄 تحديث
+            </button>
+        </div>
+
+        <!-- ===== STATS ===== -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalStudents">0</div>
+                <div class="stat-label">👨‍🎓 إجمالي الطلاب</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalExams">0</div>
+                <div class="stat-label">📝 إجمالي الامتحانات</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="avgScore">0%</div>
+                <div class="stat-label">📊 متوسط الدرجات</div>
+            </div>
+            <div class="stat-card" style="border-right-color:#b22234;">
+                <div class="stat-number" id="topScore">0</div>
+                <div class="stat-label">🏆 أعلى درجة</div>
+            </div>
+        </div>
+
+        <!-- ===== TABLE ===== -->
+        <div class="table-container">
+            <div class="table-header">
+                <h2>🏅 ترتيب الطلاب حسب الدرجات</h2>
+                <span class="results-count" id="resultsCount">0 نتيجة</span>
+            </div>
+            <div class="table-wrapper">
+                <div id="loadingState" class="loading-state">
+                    <div class="spinner"></div>
+                    <div>جاري تحميل النتائج...</div>
+                </div>
+                <div id="tableContent" style="display:none;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:60px;">#</th>
+                                <th style="min-width:180px;">الطالب</th>
+                                <th style="min-width:150px;">الامتحان</th>
+                                <th style="width:100px;">الدرجة</th>
+                                <th style="width:80px;">النسبة</th>
+                                <th style="width:100px;">الحالة</th>
+                                <th style="width:120px;">التاريخ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // 1. CONFIG & FIREBASE
+        // ============================================================
+        const FIREBASE_CONFIG = {
+            apiKey: "AIzaSyDQ8LFihzOPueW0_FCgRF6uEiAMgn24sF8",
+            authDomain: "nemo-8d0c7.firebaseapp.com",
+            projectId: "nemo-8d0c7",
+            storageBucket: "nemo-8d0c7.firebasestorage.app",
+            messagingSenderId: "585101385202",
+            appId: "1:585101385202:web:fb703a536893fb4aaadf6b"
+        };
+
+        let db, auth;
+        try {
+            firebase.initializeApp(FIREBASE_CONFIG);
+            db = firebase.firestore();
+            auth = firebase.auth();
+            console.log("✅ Firebase initialized");
+        } catch (e) {
+            console.error("❌ Firebase init error:", e);
+        }
+
+        // ============================================================
+        // 2. STATE
+        // ============================================================
+        let allResults = [];
+        let allExams = [];
+        let currentFilter = {
+            exam: 'all',
+            status: 'all',
+            search: ''
+        };
+
+        // ============================================================
+        // 3. DOM REFS
+        // ============================================================
+        const adminName = document.getElementById('adminName');
+        const examFilter = document.getElementById('examFilter');
+        const statusFilter = document.getElementById('statusFilter');
+        const searchInput = document.getElementById('searchInput');
+        const resultsBody = document.getElementById('resultsBody');
+        const resultsCount = document.getElementById('resultsCount');
+        const loadingState = document.getElementById('loadingState');
+        const tableContent = document.getElementById('tableContent');
+        const totalStudents = document.getElementById('totalStudents');
+        const totalExams = document.getElementById('totalExams');
+        const avgScore = document.getElementById('avgScore');
+        const topScore = document.getElementById('topScore');
+
+        // ============================================================
+        // 4. LOAD RESULTS
+        // ============================================================
+        async function loadResults() {
+            loadingState.style.display = 'block';
+            tableContent.style.display = 'none';
+
+            try {
+                // جلب جميع المحاولات المكتملة
+                const attemptsSnapshot = await db.collection('examAttempts')
+                    .where('status', '==', 'completed')
+                    .orderBy('submittedAt', 'desc')
+                    .get();
+
+                const results = [];
+                const examIds = new Set();
+
+                attemptsSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.examId) examIds.add(data.examId);
+                    results.push({
+                        id: doc.id,
+                        ...data,
+                        studentName: data.studentName || 'طالب غير معروف',
+                        studentEmail: data.studentEmail || '',
+                        studentId: data.studentId || '',
+                        examId: data.examId || '',
+                        score: data.score || 0,
+                        totalQuestions: data.totalQuestions || 0,
+                        percentage: data.percentage || 0,
+                        status: data.status || 'completed',
+                        submittedAt: data.submittedAt ? data.submittedAt.toDate() : new Date(),
+                        answers: data.answers || {}
+                    });
+                });
+
+                // جلب أسماء الامتحانات
+                const examNames = {};
+                for (const examId of examIds) {
+                    try {
+                        const examDoc = await db.collection('exams').doc(examId).get();
+                        if (examDoc.exists) {
+                            const data = examDoc.data();
+                            examNames[examId] = {
+                                title: data.title || 'امتحان',
+                                subject: data.subject || 'مادة'
+                            };
+                        }
+                    } catch (e) {
+                        console.warn('⚠️ Could not fetch exam:', examId);
+                    }
+                }
+
+                allResults = results.map(r => ({
+                    ...r,
+                    examTitle: examNames[r.examId]?.title || 'امتحان محذوف',
+                    examSubject: examNames[r.examId]?.subject || 'مادة'
+                }));
+
+                // جلب قائمة الامتحانات للفلتر
+                await loadExamFilters();
+
+                // عرض النتائج
+                renderResults();
+
+            } catch (error) {
+                console.error('❌ Error loading results:', error);
+                loadingState.innerHTML = `
+                    <div style="color:#b22234; font-weight:600;">
+                        ❌ حدث خطأ في تحميل النتائج<br>
+                        <span style="font-size:13px; color:#6b7f9e;">${error.message}</span>
+                    </div>
+                `;
+            }
+        }
+
+        // ============================================================
+        // 5. LOAD EXAM FILTERS
+        // ============================================================
+        async function loadExamFilters() {
+            try {
+                const examsSnapshot = await db.collection('exams').get();
+                const exams = {};
+                examsSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    exams[doc.id] = data.title || 'امتحان';
+                });
+                allExams = exams;
+
+                // ملء الفلتر
+                const currentValue = examFilter.value;
+                examFilter.innerHTML = '<option value="all">جميع الامتحانات</option>';
+                Object.entries(exams).forEach(([id, title]) => {
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = title;
+                    examFilter.appendChild(option);
+                });
+                examFilter.value = currentValue;
+
+            } catch (e) {
+                console.warn('⚠️ Could not load exam filters:', e);
+            }
+        }
+
+        // ============================================================
+        // 6. RENDER RESULTS
+        // ============================================================
+        function renderResults() {
+            // تطبيق الفلاتر
+            const exam = examFilter.value;
+            const status = statusFilter.value;
+            const search = searchInput.value.toLowerCase().trim();
+
+            let filtered = allResults.filter(r => {
+                if (exam !== 'all' && r.examId !== exam) return false;
+                if (status !== 'all' && r.status !== status) return false;
+                if (search) {
+                    const nameMatch = r.studentName?.toLowerCase().includes(search) || false;
+                    const emailMatch = r.studentEmail?.toLowerCase().includes(search) || false;
+                    if (!nameMatch && !emailMatch) return false;
+                }
+                return true;
+            });
+
+            // ترتيب من الأعلى للأقل
+            filtered.sort((a, b) => b.percentage - a.percentage || b.score - a.score);
+
+            // تحديث الإحصائيات
+            updateStats(filtered);
+
+            // عرض النتائج
+            if (filtered.length === 0) {
+                resultsBody.innerHTML = `
+                    <tr>
+                        <td colspan="7">
+                            <div class="no-results">
+                                <div class="icon">📭</div>
+                                <div>لا توجد نتائج مطابقة للبحث</div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                resultsCount.textContent = '0 نتيجة';
+                loadingState.style.display = 'none';
+                tableContent.style.display = 'block';
+                return;
+            }
+
+            let html = '';
+            filtered.forEach((result, index) => {
+                const rank = index + 1;
+                let rankClass = '';
+                let rankIcon = '';
+                if (rank === 1) { rankClass = 'gold'; rankIcon = '🥇'; }
+                else if (rank === 2) { rankClass = 'silver'; rankIcon = '🥈'; }
+                else if (rank === 3) { rankClass = 'bronze'; rankIcon = '🥉'; }
+
+                const pct = result.percentage || 0;
+                let pctClass = 'medium';
+                if (pct >= 80) pctClass = 'high';
+                else if (pct < 50) pctClass = 'low';
+
+                const statusClass = result.status === 'completed' ? 'completed' : 
+                                    result.status === 'in_progress' ? 'in-progress' : 'stopped';
+                const statusText = result.status === 'completed' ? '✅ مكتمل' :
+                                   result.status === 'in_progress' ? '⏳ قيد التنفيذ' : '⏹ متوقف';
+
+                const dateStr = result.submittedAt ? result.submittedAt.toLocaleDateString('ar-EG') : '-';
+
+                // استخراج الحرف الأول للصورة الرمزية
+                const initial = result.studentName ? result.studentName.charAt(0) : 'ط';
+
+                html += `
+                    <tr>
+                        <td class="rank-cell ${rankClass}">${rankIcon || rank}</td>
+                        <td>
+                            <div class="student-cell">
+                                <div class="student-avatar">${initial}</div>
+                                <div class="student-info">
+                                    <div class="name">${result.studentName || 'طالب غير معروف'}</div>
+                                    <div class="email">${result.studentEmail || ''}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="exam-name-cell">
+                                ${result.examTitle || 'امتحان'}
+                                <div class="subject">${result.examSubject || ''}</div>
+                            </div>
+                        </td>
+                        <td class="score-cell">${result.score || 0} <span class="total">/ ${result.totalQuestions || 0}</span></td>
+                        <td class="percentage-cell ${pctClass}">${pct}%</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td style="font-size:13px; color:#6b7f9e;">${dateStr}</td>
+                    </tr>
+                `;
+            });
+
+            resultsBody.innerHTML = html;
+            resultsCount.textContent = `${filtered.length} نتيجة`;
+            loadingState.style.display = 'none';
+            tableContent.style.display = 'block';
+        }
+
+        // ============================================================
+        // 7. UPDATE STATS
+        // ============================================================
+        function updateStats(results) {
+            const total = results.length;
+            const uniqueStudents = new Set(results.map(r => r.studentId)).size;
+            const uniqueExams = new Set(results.map(r => r.examId)).size;
+            const scores = results.map(r => r.percentage || 0);
+            const avg = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+            const top = scores.length > 0 ? Math.max(...scores) : 0;
+
+            totalStudents.textContent = uniqueStudents;
+            totalExams.textContent = uniqueExams;
+            avgScore.textContent = `${avg}%`;
+            topScore.textContent = `${top}%`;
+        }
+
+        // ============================================================
+        // 8. EVENT LISTENERS
+        // ============================================================
+        examFilter.addEventListener('change', renderResults);
+        statusFilter.addEventListener('change', renderResults);
+        searchInput.addEventListener('input', renderResults);
+
+        // ============================================================
+        // 9. INIT
+        // ============================================================
+        // التحقق من تسجيل الدخول (أدمن)
+        if (auth) {
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    adminName.textContent = user.displayName || 'أدمن النظام';
+                    loadResults();
+                } else {
+                    // محاكاة أدمن للاختبار
+                    adminName.textContent = 'أدمن النظام (تجريبي)';
+                    loadResults();
+                }
+            });
+        } else {
+            loadResults();
+        }
+
+        console.log('✅ Admin results page loaded');
+    </script>
+</body>
+</html>

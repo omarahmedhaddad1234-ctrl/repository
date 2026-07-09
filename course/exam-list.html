@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>قائمة الامتحانات المتاحة</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #f5f7fc;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            background: #ffffff;
+            padding: 18px 28px;
+            border-radius: 20px;
+            box-shadow: 0 6px 18px rgba(0, 20, 50, 0.08);
+            margin-bottom: 35px;
+            border-right: 6px solid #b22234;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            color: #0b1e3a;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header h1 span {
+            background: #b22234;
+            color: white;
+            font-size: 16px;
+            padding: 4px 14px;
+            border-radius: 40px;
+            font-weight: 500;
+        }
+
+        .user-badge {
+            background: #eef2f9;
+            padding: 8px 20px;
+            border-radius: 40px;
+            color: #0b1e3a;
+            font-weight: 600;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid #dce3ef;
+        }
+
+        .user-badge i {
+            font-style: normal;
+            background: #b22234;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .exam-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 28px;
+            margin-top: 10px;
+        }
+
+        .exam-card {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 24px 22px 28px;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.04);
+            transition: all 0.2s ease;
+            border: 1px solid #edf2f9;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            border-top: 6px solid #b22234;
+        }
+
+        .exam-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 35px rgba(11, 30, 58, 0.12);
+            border-color: #cbd7ec;
+        }
+
+        .exam-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0b1e3a;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .status-badge {
+            font-size: 12px;
+            background: #e6f0e9;
+            color: #1f7b4a;
+            padding: 2px 12px;
+            border-radius: 40px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .status-badge.closed {
+            background: #fce9e9;
+            color: #b22234;
+        }
+
+        .status-badge.attempted {
+            background: #e6edf8;
+            color: #0b1e3a;
+        }
+
+        .exam-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px 20px;
+            margin: 12px 0 16px;
+            font-size: 14px;
+            color: #2d405b;
+        }
+
+        .exam-meta .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #f1f5fe;
+            padding: 4px 14px 4px 10px;
+            border-radius: 30px;
+            font-weight: 500;
+        }
+
+        .exam-desc {
+            font-size: 14px;
+            color: #3f5575;
+            margin: 6px 0 18px;
+            line-height: 1.5;
+            flex: 1;
+        }
+
+        .exam-actions {
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .exam-score {
+            font-weight: 600;
+            color: #0b1e3a;
+            background: #f1f5fe;
+            padding: 5px 16px;
+            border-radius: 40px;
+            font-size: 14px;
+        }
+
+        .btn-start {
+            background: #0b1e3a;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 60px;
+            color: white;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 10px rgba(11, 30, 58, 0.25);
+            border: 1px solid #0b1e3a;
+            letter-spacing: 0.3px;
+        }
+
+        .btn-start:hover:not(:disabled) {
+            background: #b22234;
+            border-color: #b22234;
+            box-shadow: 0 8px 18px rgba(178, 34, 52, 0.3);
+            transform: scale(1.02);
+        }
+
+        .btn-start:disabled {
+            background: #b3bfd4;
+            border-color: #b3bfd4;
+            cursor: not-allowed;
+            box-shadow: none;
+            opacity: 0.7;
+        }
+
+        .already-done {
+            background: #eef2f9;
+            color: #0b1e3a;
+            font-weight: 600;
+            font-size: 13px;
+            padding: 6px 16px;
+            border-radius: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 70px 20px;
+            font-size: 18px;
+            color: #3f5575;
+            grid-column: 1 / -1;
+        }
+
+        .loading-state .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #dce3ef;
+            border-top: 4px solid #b22234;
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+            margin-bottom: 18px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            background: white;
+            padding: 50px 30px;
+            border-radius: 28px;
+            text-align: center;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.02);
+            border: 1px dashed #cdd9ed;
+            grid-column: 1 / -1;
+        }
+
+        .empty-state h3 {
+            color: #0b1e3a;
+            margin-bottom: 8px;
+        }
+        .empty-state p {
+            color: #5d7292;
+        }
+
+        .auth-message {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 15px 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        /* ===== مودال بيانات الطالب ===== */
+        .student-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+            backdrop-filter: blur(8px);
+        }
+
+        .student-modal-overlay.active {
+            display: flex;
+        }
+
+        .student-modal {
+            background: white;
+            border-radius: 24px;
+            padding: 40px 35px;
+            max-width: 450px;
+            width: 100%;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.3);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .student-modal h2 {
+            text-align: center;
+            color: #0b1e3a;
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .student-modal .subtitle {
+            text-align: center;
+            color: #6b7f9e;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        .student-modal .form-group {
+            margin-bottom: 18px;
+        }
+
+        .student-modal .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #0b1e3a;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .student-modal .form-group label .required {
+            color: #b22234;
+        }
+
+        .student-modal .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 2px solid #e9ecf3;
+            font-size: 15px;
+            background: #f8faff;
+            color: #0b1e3a;
+            outline: none;
+            transition: 0.15s;
+        }
+
+        .student-modal .form-group input:focus {
+            border-color: #0b1e3a;
+            background: white;
+        }
+
+        .student-modal .form-group input:disabled {
+            background: #eef2f9;
+            opacity: 0.7;
+        }
+
+        .student-modal .btn-confirm-student {
+            width: 100%;
+            padding: 14px;
+            background: #0b1e3a;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.15s;
+            margin-top: 8px;
+        }
+
+        .student-modal .btn-confirm-student:hover {
+            background: #b22234;
+            transform: scale(1.01);
+        }
+
+        .student-modal .btn-confirm-student:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .student-modal .exam-info-preview {
+            background: #f8faff;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            border-right: 4px solid #b22234;
+            font-size: 14px;
+            color: #2d405b;
+        }
+
+        .student-modal .exam-info-preview strong {
+            color: #0b1e3a;
+        }
+
+        @media (max-width: 600px) {
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+            }
+            .user-badge {
+                justify-content: center;
+            }
+            .exam-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .btn-start {
+                justify-content: center;
+            }
+            .student-modal {
+                padding: 25px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>
+            📋 الامتحانات المتاحة
+            <span>مفتوحة</span>
+        </h1>
+        <div class="user-badge" id="userBadge">
+            <i>👤</i> <span id="userName">جاري التحميل...</span>
+        </div>
+    </div>
+
+    <div id="authMessage" class="auth-message" style="display:none;">
+        ⚠️ يرجى تسجيل الدخول لعرض الامتحانات المتاحة.
+    </div>
+
+    <div id="examGrid" class="exam-grid">
+        <div class="loading-state">
+            <div class="spinner"></div>
+            <div>جاري تحميل الامتحانات...</div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== مودال بيانات الطالب ===== -->
+<div class="student-modal-overlay" id="studentModal">
+    <div class="student-modal">
+        <h2>📝 بيانات الدخول</h2>
+        <p class="subtitle">أدخل بياناتك لبدء الامتحان</p>
+        
+        <div class="exam-info-preview" id="examPreview">
+            <strong>📚 الامتحان:</strong> <span id="previewExamName">جاري التحميل...</span>
+        </div>
+
+        <div class="form-group">
+            <label>الاسم الكامل <span class="required">*</span></label>
+            <input type="text" id="studentFullName" placeholder="أدخل اسمك الثلاثي" required />
+        </div>
+
+        <div class="form-group">
+            <label>البريد الإلكتروني <span class="required">*</span></label>
+            <input type="email" id="studentEmail" placeholder="example@email.com" required />
+        </div>
+
+        <div class="form-group">
+            <label>الصف / المرحلة</label>
+            <input type="text" id="studentGrade" placeholder="مثال: الثالث الإعدادي" />
+        </div>
+
+        <button class="btn-confirm-student" id="confirmStudentBtn">🚀 بدء الامتحان</button>
+    </div>
+</div>
+
+<script>
+    // ====== تهيئة Firebase ======
+    const FIREBASE_CONFIG = {
+        apiKey: "AIzaSyDQ8LFihzOPueW0_FCgRF6uEiAMgn24sF8",
+        authDomain: "nemo-8d0c7.firebaseapp.com",
+        projectId: "nemo-8d0c7",
+        storageBucket: "nemo-8d0c7.firebasestorage.app",
+        messagingSenderId: "585101385202",
+        appId: "1:585101385202:web:fb703a536893fb4aaadf6b"
+    };
+
+    let db;
+    let auth;
+    let currentUser = null;
+    let pendingExamId = null;
+
+    try {
+        firebase.initializeApp(FIREBASE_CONFIG);
+        db = firebase.firestore();
+        auth = firebase.auth();
+        console.log("✅ Firebase initialized");
+    } catch (e) {
+        console.error("❌ Firebase init error:", e.message);
+        db = null;
+        auth = null;
+    }
+
+    const grid = document.getElementById('examGrid');
+    const userNameSpan = document.getElementById('userName');
+    const authMessage = document.getElementById('authMessage');
+    const studentModal = document.getElementById('studentModal');
+    const studentFullName = document.getElementById('studentFullName');
+    const studentEmail = document.getElementById('studentEmail');
+    const studentGrade = document.getElementById('studentGrade');
+    const confirmStudentBtn = document.getElementById('confirmStudentBtn');
+    const previewExamName = document.getElementById('previewExamName');
+
+    // ====== متغيرات حالة التطبيق ======
+    let attemptedExamsSet = new Set();
+    let allExams = [];
+
+    // ====== عرض الكروت ======
+    function renderExams(examsArray) {
+        if (!examsArray || examsArray.length === 0) {
+            grid.innerHTML = `
+                <div class="empty-state">
+                    <h3>📭 لا توجد امتحانات مفتوحة حالياً</h3>
+                    <p>تواصل مع المعلم لتفعيل امتحانات جديدة.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        examsArray.forEach((exam) => {
+            const isActive = exam.active === true;
+            const attempted = attemptedExamsSet.has(exam.id);
+            const totalQuestions = exam.totalQuestions || exam.questions?.length || 0;
+            const duration = exam.duration || 0;
+            const subject = exam.subject || 'غير محدد';
+            const totalMarks = exam.totalMarks || 0;
+            const title = exam.title || 'امتحان بدون عنوان';
+            const description = exam.description || 'لا يوجد وصف.';
+
+            let statusText = isActive ? 'مفتوح' : 'مغلق';
+            let statusClass = isActive ? '' : 'closed';
+            if (attempted) {
+                statusText = '✅ مؤدى';
+                statusClass = 'attempted';
+            }
+
+            const disabled = (!isActive || attempted) ? 'disabled' : '';
+            const examId = exam.id;
+
+            html += `
+                <div class="exam-card">
+                    <div class="exam-title">
+                        ${title}
+                        <span class="status-badge ${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="exam-meta">
+                        <span class="meta-item">📚 ${subject}</span>
+                        ${duration > 0 ? `<span class="meta-item">⏱ ${duration} د</span>` : ''}
+                        ${totalQuestions > 0 ? `<span class="meta-item">❓ ${totalQuestions} سؤال</span>` : ''}
+                    </div>
+                    <div class="exam-desc">
+                        ${description}
+                    </div>
+                    <div class="exam-actions">
+                        ${totalMarks > 0 ? `<span class="exam-score">⭐ ${totalMarks} درجة</span>` : ''}
+                        <button class="btn-start" ${disabled} data-examid="${examId}" data-examtitle="${title}">
+                            <i>🚀</i> ابدأ الامتحان
+                        </button>
+                        ${attempted ? '<span class="already-done">✅ تم الأداء</span>' : ''}
+                    </div>
+                </div>
+            `;
+        });
+
+        grid.innerHTML = html;
+
+        // ====== مستمعات الأزرار - فتح مودال بيانات الطالب ======
+        document.querySelectorAll('.btn-start:not([disabled])').forEach((btn) => {
+            btn.addEventListener('click', function() {
+                const examId = this.dataset.examid;
+                const examTitle = this.dataset.examtitle || 'الامتحان';
+                pendingExamId = examId;
+                previewExamName.textContent = examTitle;
+                
+                // تعبئة البيانات الحالية من Auth إذا وجدت
+                if (currentUser) {
+                    studentFullName.value = currentUser.displayName || '';
+                    studentEmail.value = currentUser.email || '';
+                } else {
+                    studentFullName.value = '';
+                    studentEmail.value = '';
+                }
+                studentGrade.value = '';
+                
+                studentModal.classList.add('active');
+            });
+        });
+    }
+
+    // ====== تأكيد بيانات الطالب وبدء الامتحان ======
+    confirmStudentBtn.addEventListener('click', async function() {
+        const name = studentFullName.value.trim();
+        const email = studentEmail.value.trim();
+        const grade = studentGrade.value.trim();
+
+        if (!name) {
+            alert('❌ يرجى إدخال الاسم الكامل');
+            studentFullName.focus();
+            return;
+        }
+
+        if (!email) {
+            alert('❌ يرجى إدخال البريد الإلكتروني');
+            studentEmail.focus();
+            return;
+        }
+
+        if (!email.includes('@') || !email.includes('.')) {
+            alert('❌ يرجى إدخال بريد إلكتروني صحيح');
+            studentEmail.focus();
+            return;
+        }
+
+        const examId = pendingExamId;
+        if (!examId) {
+            alert('❌ حدث خطأ، يرجى المحاولة مرة أخرى');
+            return;
+        }
+
+        this.disabled = true;
+        this.textContent = '⏳ جاري التحضير...';
+
+        try {
+            if (!currentUser) {
+                throw new Error('يجب تسجيل الدخول أولاً');
+            }
+
+            // 🔥 التحقق من وجود محاولة مكتملة مسبقاً
+            const existingCompleted = await db.collection("examAttempts")
+                .where("studentId", "==", currentUser.uid)
+                .where("examId", "==", examId)
+                .where("status", "==", "completed")
+                .get();
+
+            if (!existingCompleted.empty) {
+                alert('⚠️ لقد أديت هذا الامتحان مسبقاً!');
+                this.disabled = false;
+                this.textContent = '🚀 بدء الامتحان';
+                studentModal.classList.remove('active');
+                loadStudentDataAndExams();
+                return;
+            }
+
+            // 🔥 التحقق من وجود محاولة قيد التنفيذ
+            const existingInProgress = await db.collection("examAttempts")
+                .where("studentId", "==", currentUser.uid)
+                .where("examId", "==", examId)
+                .where("status", "==", "in_progress")
+                .get();
+
+            if (!existingInProgress.empty) {
+                const attemptDoc = existingInProgress.docs[0];
+                const attemptId = attemptDoc.id;
+                studentModal.classList.remove('active');
+                window.location.href = `exams.html?id=${examId}&attemptId=${attemptId}`;
+                return;
+            }
+
+            // إنشاء محاولة جديدة مع بيانات الطالب المدخلة
+            const attemptRef = db.collection("examAttempts").doc();
+            
+            const examDoc = await db.collection('exams').doc(examId).get();
+            const examData = examDoc.data() || {};
+            const duration = examData.duration || 0;
+
+            await attemptRef.set({
+                examId: examId,
+                startedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                status: "in_progress",
+                score: null,
+                submittedAt: null,
+                answers: {},
+                remainingTime: duration * 60,
+                studentId: currentUser.uid,
+                studentName: name,  // ✅ الاسم المدخل من الطالب
+                studentEmail: email,  // ✅ الإيميل المدخل من الطالب
+                studentGrade: grade || 'غير محدد',
+                studentSection: 'غير محدد',
+                attemptNumber: 1,
+                deviceInfo: navigator.userAgent || 'unknown'
+            });
+
+            // إغلاق المودال والانتقال للامتحان
+            studentModal.classList.remove('active');
+            window.location.href = `exams.html?id=${examId}&attemptId=${attemptRef.id}`;
+            
+        } catch (error) {
+            console.error("❌ خطأ في بدء الامتحان:", error);
+            alert(`حدث خطأ: ${error.message}`);
+            this.disabled = false;
+            this.textContent = '🚀 بدء الامتحان';
+        }
+    });
+
+    // ====== إغلاق المودال بالضغط خارجها ======
+    studentModal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            studentModal.classList.remove('active');
+            confirmStudentBtn.disabled = false;
+            confirmStudentBtn.textContent = '🚀 بدء الامتحان';
+        }
+    });
+
+    // ====== جلب بيانات الطالب والمحاولات ======
+    async function loadStudentDataAndExams() {
+        if (!db || !auth) {
+            grid.innerHTML = `
+                <div class="empty-state">
+                    <h3>⚠️ خطأ في الاتصال</h3>
+                    <p>تعذر الاتصال بقاعدة البيانات. تأكد من إعدادات Firebase.</p>
+                    <button onclick="location.reload()" style="margin-top:15px; padding:8px 30px; background:#0b1e3a; color:white; border:none; border-radius:40px; cursor:pointer;">إعادة المحاولة</button>
+                </div>
+            `;
+            return;
+        }
+
+        grid.innerHTML = `
+            <div class="loading-state">
+                <div class="spinner"></div>
+                <div>جاري تحميل الامتحانات...</div>
+            </div>
+        `;
+
+        try {
+            currentUser = auth.currentUser;
+            
+            if (!currentUser) {
+                authMessage.style.display = 'block';
+                userNameSpan.textContent = 'غير مسجل دخول';
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <h3>🔒 يرجى تسجيل الدخول</h3>
+                        <p>سجل الدخول لعرض الامتحانات المتاحة.</p>
+                        <button onclick="window.location.href='login.html'" style="margin-top:15px; padding:8px 30px; background:#0b1e3a; color:white; border:none; border-radius:40px; cursor:pointer;">تسجيل الدخول</button>
+                    </div>
+                `;
+                return;
+            }
+
+            authMessage.style.display = 'none';
+            userNameSpan.textContent = `مرحباً، ${currentUser.displayName || 'طالب'}`;
+
+            // جلب المحاولات المكتملة
+            const attemptsSnapshot = await db.collection("examAttempts")
+                .where("studentId", "==", currentUser.uid)
+                .where("status", "==", "completed")
+                .get();
+
+            attemptedExamsSet = new Set();
+            attemptsSnapshot.forEach((doc) => {
+                const data = doc.data();
+                if (data.examId) {
+                    attemptedExamsSet.add(data.examId);
+                }
+            });
+
+            console.log(`✅ وجدت ${attemptedExamsSet.size} امتحانات مكتملة للطالب`);
+
+            // جلب الامتحانات النشطة
+            const examsSnapshot = await db.collection("exams")
+                .where("active", "==", true)
+                .orderBy("createdAt", "desc")
+                .get();
+
+            const exams = [];
+            examsSnapshot.forEach((doc) => {
+                const data = doc.data();
+                exams.push({
+                    id: doc.id,
+                    ...data,
+                    totalQuestions: data.totalQuestions || data.questions?.length || 0,
+                    duration: data.duration || 0,
+                    subject: data.subject || 'غير محدد',
+                    totalMarks: data.totalMarks || 0,
+                    title: data.title || 'امتحان',
+                    description: data.description || 'لا يوجد وصف.'
+                });
+            });
+
+            allExams = exams;
+            renderExams(exams);
+
+        } catch (error) {
+            console.error("❌ خطأ في تحميل البيانات:", error);
+            grid.innerHTML = `
+                <div class="empty-state">
+                    <h3>⚠️ حدث خطأ</h3>
+                    <p>تعذر تحميل البيانات. تأكد من اتصالك بالإنترنت.</p>
+                    <p style="font-size:13px; color:#b22234;">${error.message}</p>
+                    <button onclick="location.reload()" style="margin-top:15px; padding:8px 30px; background:#0b1e3a; color:white; border:none; border-radius:40px; cursor:pointer;">إعادة المحاولة</button>
+                </div>
+            `;
+        }
+    }
+
+    // ====== مراقبة حالة تسجيل الدخول ======
+    function initAuthListener() {
+        if (!auth) {
+            console.warn("⚠️ Auth not available, using mock user");
+            currentUser = {
+                uid: "student_demo_123",
+                displayName: "أحمد محمد",
+                email: "ahmed@example.com"
+            };
+            loadStudentDataAndExams();
+            return;
+        }
+
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                console.log("✅ User logged in:", user.uid);
+                loadStudentDataAndExams();
+            } else {
+                currentUser = null;
+                console.log("❌ No user logged in");
+                authMessage.style.display = 'block';
+                userNameSpan.textContent = 'غير مسجل دخول';
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <h3>🔒 يرجى تسجيل الدخول</h3>
+                        <p>سجل الدخول لعرض الامتحانات المتاحة.</p>
+                        <button onclick="window.location.href='login.html'" style="margin-top:15px; padding:8px 30px; background:#0b1e3a; color:white; border:none; border-radius:40px; cursor:pointer;">تسجيل الدخول</button>
+                    </div>
+                `;
+            }
+        });
+    }
+
+    // ====== بدء التطبيق ======
+    if (auth) {
+        initAuthListener();
+    } else {
+        console.warn("⚠️ Using mock auth for testing");
+        currentUser = {
+            uid: "student_demo_123",
+            displayName: "أحمد محمد",
+            email: "ahmed@example.com"
+        };
+        userNameSpan.textContent = `مرحباً، ${currentUser.displayName}`;
+        loadStudentDataAndExams();
+    }
+
+    console.log('✅ صفحة exam-list.html تعمل مع Firebase - مع مودال بيانات الطالب');
+</script>
+
+</body>
+</html>

@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>لوحة تحكم الأدمن - إدارة الامتحانات</title>
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -27,7 +26,6 @@
             margin: 0 auto;
         }
 
-        /* ===== Header ===== */
         .admin-header {
             background: #ffffff;
             padding: 20px 30px;
@@ -98,7 +96,6 @@
             flex-wrap: wrap;
         }
 
-        /* ===== Buttons ===== */
         .btn {
             padding: 10px 24px;
             border-radius: 12px;
@@ -155,7 +152,6 @@
             border-radius: 8px;
         }
 
-        /* ===== Stats ===== */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -190,7 +186,6 @@
             margin-top: 2px;
         }
 
-        /* ===== Tabs ===== */
         .tabs {
             display: flex;
             gap: 4px;
@@ -224,7 +219,6 @@
             background: #f8faff;
         }
 
-        /* ===== Table ===== */
         .table-container {
             background: white;
             border-radius: 0 0 20px 20px;
@@ -314,6 +308,11 @@
             color: #b22234;
         }
 
+        .status-badge.waiting {
+            background: #fef3d7;
+            color: #b78a1a;
+        }
+
         .actions-cell {
             display: flex;
             gap: 6px;
@@ -331,7 +330,6 @@
             margin-bottom: 10px;
         }
 
-        /* ===== Loading ===== */
         .loading-state {
             text-align: center;
             padding: 40px 20px;
@@ -352,7 +350,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* ===== Toast ===== */
         .toast {
             position: fixed;
             bottom: 30px;
@@ -382,7 +379,6 @@
             to { transform: translateX(-50%) translateY(0); opacity: 1; }
         }
 
-        /* ===== Modal ===== */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -440,7 +436,6 @@
             margin-top: 15px;
         }
 
-        /* ===== Form inside modal ===== */
         .form-group {
             margin-bottom: 16px;
             text-align: right;
@@ -496,7 +491,6 @@
             border-top: 2px solid #f0f2f7;
         }
 
-        /* ===== Questions inside modal ===== */
         .edit-question-card {
             background: #f8faff;
             border-radius: 12px;
@@ -615,7 +609,6 @@
             margin: 8px 0 16px;
         }
 
-        /* ===== Delete Modal ===== */
         .modal-box.small {
             max-width: 450px;
             text-align: center;
@@ -625,7 +618,6 @@
             justify-content: center;
         }
 
-        /* ===== Responsive ===== */
         @media (max-width: 768px) {
             .admin-header {
                 flex-direction: column;
@@ -689,7 +681,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- ===== HEADER ===== -->
         <header class="admin-header">
             <h1>
                 📚 لوحة تحكم الأدمن
@@ -711,7 +702,6 @@
             </div>
         </header>
 
-        <!-- ===== STATS ===== -->
         <div class="stats-grid" id="statsGrid">
             <div class="stat-card" onclick="filterExams('all')">
                 <div class="stat-number" id="totalExams">0</div>
@@ -723,7 +713,11 @@
             </div>
             <div class="stat-card" onclick="filterExams('closed')">
                 <div class="stat-number" id="closedExams">0</div>
-                <div class="stat-label">🔒 مغلقة</div>
+                <div class="stat-label">🔒 منتهية</div>
+            </div>
+            <div class="stat-card" onclick="filterExams('waiting')">
+                <div class="stat-number" id="waitingExams">0</div>
+                <div class="stat-label">⏳ لم تبدأ</div>
             </div>
             <div class="stat-card" style="border-right-color:#b22234;" onclick="switchTab('results')">
                 <div class="stat-number" id="totalStudents">0</div>
@@ -731,13 +725,11 @@
             </div>
         </div>
 
-        <!-- ===== TABS ===== -->
         <div class="tabs" id="mainTabs">
             <button class="tab-btn active" data-tab="exams" onclick="switchTab('exams')">📋 الامتحانات</button>
             <button class="tab-btn" data-tab="results" onclick="switchTab('results')">🏆 النتائج والترتيب</button>
         </div>
 
-        <!-- ===== TAB: EXAMS ===== -->
         <div id="tabExams">
             <div class="table-container">
                 <div class="table-header">
@@ -770,7 +762,6 @@
             </div>
         </div>
 
-        <!-- ===== TAB: RESULTS ===== -->
         <div id="tabResults" style="display:none;">
             <div class="table-container">
                 <div class="table-header">
@@ -802,7 +793,6 @@
         </div>
     </div>
 
-    <!-- ===== MODAL حذف ===== -->
     <div class="modal-overlay" id="deleteModal">
         <div class="modal-box small">
             <h3>🗑️ تأكيد الحذف</h3>
@@ -814,7 +804,6 @@
         </div>
     </div>
 
-    <!-- ===== MODAL إنشاء / تعديل ===== -->
     <div class="modal-overlay" id="editModal">
         <div class="modal-box">
             <h3 id="editModalTitle">📝 إنشاء امتحان جديد</h3>
@@ -839,7 +828,7 @@
                             <option value="الأول الإعدادي">الأول الإعدادي</option>
                             <option value="الثاني الإعدادي">الثاني الإعدادي</option>
                             <option value="الثالث الإعدادي">الثالث الإعدادي</option>
-                            <option value="الكورس">الكورس </option>
+                            <option value="الكورس">الكورس</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -847,6 +836,18 @@
                         <input type="number" id="editExamDuration" placeholder="30" min="1" required />
                     </div>
                 </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>تاريخ ووقت البداية <span class="required">*</span></label>
+                        <input type="datetime-local" id="editExamStart" required />
+                    </div>
+                    <div class="form-group">
+                        <label>تاريخ ووقت النهاية <span class="required">*</span></label>
+                        <input type="datetime-local" id="editExamEnd" required />
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label>وصف الامتحان</label>
                     <textarea id="editExamDescription" placeholder="وصف مختصر للامتحان..."></textarea>
@@ -855,13 +856,6 @@
                     <div class="form-group">
                         <label>الدرجة الكلية</label>
                         <input type="number" id="editExamTotalMarks" placeholder="20" min="1" value="20" />
-                    </div>
-                    <div class="form-group">
-                        <label>حالة الامتحان</label>
-                        <select id="editExamActive">
-                            <option value="true">مفتوح</option>
-                            <option value="false">مغلق</option>
-                        </select>
                     </div>
                 </div>
 
@@ -879,13 +873,9 @@
         </div>
     </div>
 
-    <!-- ===== TOAST ===== -->
     <div class="toast" id="toast"></div>
 
     <script>
-        // ============================================================
-        // 1. CONFIG & FIREBASE
-        // ============================================================
         const FIREBASE_CONFIG = {
             apiKey: "AIzaSyDQ8LFihzOPueW0_FCgRF6uEiAMgn24sF8",
             authDomain: "nemo-8d0c7.firebaseapp.com",
@@ -905,9 +895,6 @@
             console.error("❌ Firebase init error:", e);
         }
 
-        // ============================================================
-        // 2. STATE
-        // ============================================================
         let allExams = [];
         let filteredExams = [];
         let currentFilter = 'all';
@@ -917,9 +904,6 @@
         const letters = ['أ', 'ب', 'ج', 'د', 'هـ', 'و'];
         let allResults = [];
 
-        // ============================================================
-        // 3. DOM REFS
-        // ============================================================
         const adminName = document.getElementById('adminName');
         const examsBody = document.getElementById('examsBody');
         const resultsCount = document.getElementById('resultsCount');
@@ -928,6 +912,7 @@
         const totalExams = document.getElementById('totalExams');
         const openExams = document.getElementById('openExams');
         const closedExams = document.getElementById('closedExams');
+        const waitingExams = document.getElementById('waitingExams');
         const totalStudents = document.getElementById('totalStudents');
         const toast = document.getElementById('toast');
         const deleteModal = document.getElementById('deleteModal');
@@ -941,9 +926,6 @@
         const loadingResults = document.getElementById('loadingResults');
         const resultsContent = document.getElementById('resultsContent');
 
-        // ============================================================
-        // 4. SWITCH TABS
-        // ============================================================
         function switchTab(tab) {
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.tab === tab);
@@ -959,9 +941,26 @@
             }
         }
 
-        // ============================================================
-        // 5. LOAD EXAMS
-        // ============================================================
+        function getExamStatus(exam) {
+            const now = new Date();
+            const start = exam.startTime ? exam.startTime.toDate() : null;
+            const end = exam.endTime ? exam.endTime.toDate() : null;
+
+            if (start && now < start) {
+                return { statusText: '⏳ لم يبدأ', statusClass: 'waiting' };
+            }
+            if (end && now > end) {
+                return { statusText: '🔒 انتهى', statusClass: 'closed' };
+            }
+            return { statusText: '✅ مفتوح', statusClass: 'open' };
+        }
+
+        function adjustTimeForInput(date) {
+            const d = new Date(date);
+            d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+            return d.toISOString().slice(0, 16);
+        }
+
         async function loadExams() {
             loadingState.style.display = 'block';
             tableContent.style.display = 'none';
@@ -996,11 +995,18 @@
                     totalQ += exam.questionsCount;
                 }
 
-                const open = allExams.filter(e => e.active === true).length;
-                const closed = allExams.filter(e => e.active === false).length;
+                let open = 0, closed = 0, waiting = 0;
+                allExams.forEach(exam => {
+                    const status = getExamStatus(exam);
+                    if (status.statusClass === 'open') open++;
+                    else if (status.statusClass === 'closed') closed++;
+                    else if (status.statusClass === 'waiting') waiting++;
+                });
+
                 totalExams.textContent = allExams.length;
                 openExams.textContent = open;
                 closedExams.textContent = closed;
+                waitingExams.textContent = waiting;
 
                 filterExams('all');
 
@@ -1016,9 +1022,6 @@
             }
         }
 
-        // ============================================================
-        // 6. FILTER EXAMS
-        // ============================================================
         function filterExams(filter) {
             currentFilter = filter;
             document.querySelectorAll('#mainTabs .tab-btn').forEach(btn => {
@@ -1032,17 +1035,16 @@
             if (filter === 'all') {
                 filteredExams = [...allExams];
             } else if (filter === 'open') {
-                filteredExams = allExams.filter(e => e.active === true);
+                filteredExams = allExams.filter(e => getExamStatus(e).statusClass === 'open');
             } else if (filter === 'closed') {
-                filteredExams = allExams.filter(e => e.active === false);
+                filteredExams = allExams.filter(e => getExamStatus(e).statusClass === 'closed');
+            } else if (filter === 'waiting') {
+                filteredExams = allExams.filter(e => getExamStatus(e).statusClass === 'waiting');
             }
 
             renderExams();
         }
 
-        // ============================================================
-        // 7. RENDER EXAMS
-        // ============================================================
         function renderExams() {
             loadingState.style.display = 'none';
             tableContent.style.display = 'block';
@@ -1053,7 +1055,7 @@
                         <td colspan="8">
                             <div class="no-results">
                                 <div class="icon">📭</div>
-                                <div>لا توجد امتحانات ${currentFilter === 'all' ? '' : currentFilter === 'open' ? 'مفتوحة' : 'مغلقة'}</div>
+                                <div>لا توجد امتحانات ${currentFilter === 'all' ? '' : currentFilter === 'open' ? 'مفتوحة' : currentFilter === 'closed' ? 'منتهية' : 'لم تبدأ'}</div>
                             </div>
                         </td>
                     </tr>
@@ -1064,8 +1066,7 @@
 
             let html = '';
             filteredExams.forEach((exam, index) => {
-                const statusClass = exam.active ? 'open' : 'closed';
-                const statusText = exam.active ? '✅ مفتوح' : '🔒 مغلق';
+                const status = getExamStatus(exam);
                 const grade = exam.grade || '-';
                 const subject = exam.subject || '-';
                 const duration = exam.duration || '-';
@@ -1079,7 +1080,7 @@
                         <td>${grade}</td>
                         <td>${duration} د</td>
                         <td>${qCount}</td>
-                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td><span class="status-badge ${status.statusClass}">${status.statusText}</span></td>
                         <td>
                             <div class="actions-cell">
                                 <button class="btn btn-primary btn-sm" onclick="openEditModal('${exam.id}')">✏️ تعديل</button>
@@ -1094,9 +1095,6 @@
             resultsCount.textContent = `${filteredExams.length} امتحان`;
         }
 
-        // ============================================================
-        // 8. DELETE EXAM
-        // ============================================================
         function confirmDelete(examId) {
             deleteTargetId = examId;
             deleteModal.classList.add('active');
@@ -1137,9 +1135,6 @@
             }
         });
 
-        // ============================================================
-        // 9. CREATE / EDIT MODAL
-        // ============================================================
         function openCreateModal() {
             editTargetId = null;
             editModalTitle.textContent = '📝 إنشاء امتحان جديد';
@@ -1149,7 +1144,8 @@
             document.getElementById('editExamDuration').value = '';
             document.getElementById('editExamDescription').value = '';
             document.getElementById('editExamTotalMarks').value = '20';
-            document.getElementById('editExamActive').value = 'true';
+            document.getElementById('editExamStart').value = '';
+            document.getElementById('editExamEnd').value = '';
             editQuestions = [];
             addEditQuestion();
             renderEditQuestions();
@@ -1175,7 +1171,18 @@
                 document.getElementById('editExamDuration').value = data.duration || '';
                 document.getElementById('editExamDescription').value = data.description || '';
                 document.getElementById('editExamTotalMarks').value = data.totalMarks || 20;
-                document.getElementById('editExamActive').value = data.active ? 'true' : 'false';
+                
+                if (data.startTime) {
+                    document.getElementById('editExamStart').value = adjustTimeForInput(data.startTime.toDate());
+                } else {
+                    document.getElementById('editExamStart').value = '';
+                }
+                
+                if (data.endTime) {
+                    document.getElementById('editExamEnd').value = adjustTimeForInput(data.endTime.toDate());
+                } else {
+                    document.getElementById('editExamEnd').value = '';
+                }
 
                 const qSnapshot = await db.collection('exams')
                     .doc(examId)
@@ -1215,9 +1222,6 @@
             editTargetId = null;
         }
 
-        // ============================================================
-        // 10. EDIT QUESTIONS
-        // ============================================================
         function addEditQuestion(questionData = null) {
             const q = questionData || {
                 question: '',
@@ -1303,9 +1307,6 @@
             editQuestionsContainer.innerHTML = html;
         }
 
-        // ============================================================
-        // 11. SAVE EXAM (Create or Update)
-        // ============================================================
         saveExamBtn.addEventListener('click', async () => {
             const title = document.getElementById('editExamTitle').value.trim();
             const subject = document.getElementById('editExamSubject').value.trim();
@@ -1313,12 +1314,22 @@
             const duration = parseInt(document.getElementById('editExamDuration').value);
             const description = document.getElementById('editExamDescription').value.trim();
             const totalMarks = parseInt(document.getElementById('editExamTotalMarks').value) || 0;
-            const active = document.getElementById('editExamActive').value === 'true';
+            const startTime = document.getElementById('editExamStart').value;
+            const endTime = document.getElementById('editExamEnd').value;
 
             if (!title) { showToast('❌ يرجى إدخال عنوان الامتحان', 'error'); return; }
             if (!subject) { showToast('❌ يرجى إدخال المادة', 'error'); return; }
             if (!grade) { showToast('❌ يرجى اختيار المرحلة', 'error'); return; }
             if (!duration || duration < 1) { showToast('❌ يرجى إدخال مدة صحيحة', 'error'); return; }
+            if (!startTime) { showToast('❌ يرجى تحديد وقت البداية', 'error'); return; }
+            if (!endTime) { showToast('❌ يرجى تحديد وقت النهاية', 'error'); return; }
+
+            const startDate = new Date(startTime);
+            const endDate = new Date(endTime);
+            if (endDate <= startDate) {
+                showToast('❌ وقت النهاية يجب أن يكون بعد وقت البداية', 'error');
+                return;
+            }
 
             const validQuestions = editQuestions.filter(q => q.question && q.question.trim() !== '');
             if (validQuestions.length === 0) {
@@ -1344,9 +1355,10 @@
                     duration: duration,
                     description: description,
                     totalMarks: totalMarks || validQuestions.length,
-                    active: active,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    totalQuestions: validQuestions.length
+                    totalQuestions: validQuestions.length,
+                    startTime: firebase.firestore.Timestamp.fromDate(startDate),
+                    endTime: firebase.firestore.Timestamp.fromDate(endDate)
                 };
 
                 let examRef;
@@ -1389,9 +1401,6 @@
             }
         });
 
-        // ============================================================
-        // 12. LOAD RESULTS
-        // ============================================================
         async function loadResults() {
             loadingResults.style.display = 'block';
             resultsContent.style.display = 'none';
@@ -1453,9 +1462,6 @@
             }
         }
 
-        // ============================================================
-        // 13. RENDER RESULTS
-        // ============================================================
         function renderResults() {
             loadingResults.style.display = 'none';
             resultsContent.style.display = 'block';
@@ -1486,10 +1492,6 @@
                 else if (rank === 3) rankIcon = '🥉';
 
                 const pct = result.percentage || 0;
-                let pctClass = 'medium';
-                if (pct >= 80) pctClass = 'high';
-                else if (pct < 50) pctClass = 'low';
-
                 const dateStr = result.submittedAt ? result.submittedAt.toLocaleDateString('ar-EG') : '-';
                 const initial = result.studentName ? result.studentName.charAt(0) : 'ط';
 
@@ -1520,9 +1522,6 @@
             resultsCountStudents.textContent = `${sorted.length} نتيجة`;
         }
 
-        // ============================================================
-        // 14. TOAST
-        // ============================================================
         function showToast(message, type = '') {
             toast.textContent = message;
             toast.className = 'toast';
@@ -1534,9 +1533,6 @@
             }, 3500);
         }
 
-        // ============================================================
-        // 15. INIT
-        // ============================================================
         if (auth) {
             auth.onAuthStateChanged((user) => {
                 if (user) {
@@ -1551,7 +1547,6 @@
             loadExams();
         }
 
-        // إغلاق المودال عند الضغط خارجها
         document.querySelectorAll('.modal-overlay').forEach(modal => {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) {
@@ -1561,7 +1556,7 @@
             });
         });
 
-        console.log('✅ Admin dashboard loaded - كل شيء في صفحة واحدة مع سكرول');
+        console.log('✅ Admin dashboard loaded - مع startTime و endTime و تعديل التوقيت');
     </script>
 </body>
 </html>

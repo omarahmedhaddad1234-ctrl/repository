@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>قائمة الامتحانات المتاحة</title>
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -92,7 +91,7 @@
 
         .exam-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 28px;
             margin-top: 10px;
         }
@@ -108,6 +107,15 @@
             flex-direction: column;
             position: relative;
             border-top: 6px solid #b22234;
+        }
+
+        .exam-card.closed-card {
+            opacity: 0.65;
+            border-top-color: #b3bfd4;
+        }
+
+        .exam-card.waiting-card {
+            border-top-color: #c9a83e;
         }
 
         .exam-card:hover {
@@ -129,17 +137,25 @@
 
         .status-badge {
             font-size: 12px;
-            background: #e6f0e9;
-            color: #1f7b4a;
             padding: 2px 12px;
             border-radius: 40px;
             font-weight: 600;
             letter-spacing: 0.3px;
         }
 
+        .status-badge.open {
+            background: #e6f0e9;
+            color: #1f7b4a;
+        }
+
         .status-badge.closed {
             background: #fce9e9;
             color: #b22234;
+        }
+
+        .status-badge.waiting {
+            background: #fef3d7;
+            color: #b78a1a;
         }
 
         .status-badge.attempted {
@@ -150,8 +166,8 @@
         .exam-meta {
             display: flex;
             flex-wrap: wrap;
-            gap: 14px 20px;
-            margin: 12px 0 16px;
+            gap: 10px 16px;
+            margin: 12px 0 14px;
             font-size: 14px;
             color: #2d405b;
         }
@@ -164,6 +180,46 @@
             padding: 4px 14px 4px 10px;
             border-radius: 30px;
             font-weight: 500;
+        }
+
+        .exam-times {
+            background: #f8faff;
+            border-radius: 12px;
+            padding: 10px 14px;
+            margin: 6px 0 14px;
+            font-size: 13px;
+            color: #2d405b;
+            border-right: 3px solid #b22234;
+        }
+
+        .exam-times .time-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2px 0;
+        }
+
+        .exam-times .time-row .label {
+            color: #6b7f9e;
+            font-weight: 500;
+        }
+
+        .exam-times .time-row .value {
+            font-weight: 600;
+            color: #0b1e3a;
+        }
+
+        .countdown-timer {
+            font-weight: 700;
+            color: #b78a1a;
+            font-size: 16px;
+            text-align: center;
+            padding: 6px;
+            background: #fef3d7;
+            border-radius: 8px;
+            margin: 6px 0 12px;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
         }
 
         .exam-desc {
@@ -289,7 +345,6 @@
             font-weight: 500;
         }
 
-        /* ===== مودال بيانات الطالب ===== */
         .student-modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -431,6 +486,11 @@
             .student-modal {
                 padding: 25px 20px;
             }
+            .exam-times .time-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 2px;
+            }
         }
     </style>
 </head>
@@ -458,7 +518,6 @@
     </div>
 </div>
 
-<!-- ===== مودال بيانات الطالب ===== -->
 <div class="student-modal-overlay" id="studentModal">
     <div class="student-modal">
         <h2>📝 بيانات الدخول</h2>
@@ -488,7 +547,6 @@
 </div>
 
 <script>
-    // ====== تهيئة Firebase ======
     const FIREBASE_CONFIG = {
         apiKey: "AIzaSyDQ8LFihzOPueW0_FCgRF6uEiAMgn24sF8",
         authDomain: "nemo-8d0c7.firebaseapp.com",
@@ -524,16 +582,66 @@
     const confirmStudentBtn = document.getElementById('confirmStudentBtn');
     const previewExamName = document.getElementById('previewExamName');
 
-    // ====== متغيرات حالة التطبيق ======
     let attemptedExamsSet = new Set();
     let allExams = [];
+    let countdownIntervals = [];
 
-    // ====== عرض الكروت ======
+    function getExamStatus(exam) {
+        const now = new Date();
+        const start = exam.startTime ? exam.startTime.toDate() : null;
+        const end = exam.endTime ? exam.endTime.toDate() : null;
+
+        if (start && now < start) {
+            return { status: 'waiting', statusText: '⏳ لم يبدأ', statusClass: 'waiting' };
+        }
+        if (end && now > end) {
+            return { status: 'closed', statusText: '🔒 انتهى', statusClass: 'closed' };
+        }
+        return { status: 'open', statusText: '✅ مفتوح', statusClass: 'open' };
+    }
+
+    function formatDate(date) {
+        if (!date) return '-';
+        return date.toLocaleDateString('ar-EG', { 
+            year: 'numeric', 
+            month: 'numeric', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    function getTimeRemaining(endTime) {
+        const now = new Date();
+        const end = endTime.toDate();
+        const diff = end - now;
+        if (diff <= 0) return null;
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function getTimeToStart(startTime) {
+        const now = new Date();
+        const start = startTime.toDate();
+        const diff = start - now;
+        if (diff <= 0) return null;
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
     function renderExams(examsArray) {
+        // Clear old intervals
+        countdownIntervals.forEach(interval => clearInterval(interval));
+        countdownIntervals = [];
+
         if (!examsArray || examsArray.length === 0) {
             grid.innerHTML = `
                 <div class="empty-state">
-                    <h3>📭 لا توجد امتحانات مفتوحة حالياً</h3>
+                    <h3>📭 لا توجد امتحانات متاحة حالياً</h3>
                     <p>تواصل مع المعلم لتفعيل امتحانات جديدة.</p>
                 </div>
             `;
@@ -542,7 +650,11 @@
 
         let html = '';
         examsArray.forEach((exam) => {
-            const isActive = exam.active === true;
+            const statusObj = getExamStatus(exam);
+            const status = statusObj.status;
+            const statusText = statusObj.statusText;
+            const statusClass = statusObj.statusClass;
+
             const attempted = attemptedExamsSet.has(exam.id);
             const totalQuestions = exam.totalQuestions || exam.questions?.length || 0;
             const duration = exam.duration || 0;
@@ -551,36 +663,87 @@
             const title = exam.title || 'امتحان بدون عنوان';
             const description = exam.description || 'لا يوجد وصف.';
 
-            let statusText = isActive ? 'مفتوح' : 'مغلق';
-            let statusClass = isActive ? '' : 'closed';
+            let displayStatusText = statusText;
+            let displayStatusClass = statusClass;
+            let cardClass = '';
+
             if (attempted) {
-                statusText = '✅ مؤدى';
-                statusClass = 'attempted';
+                displayStatusText = '✅ مؤدى';
+                displayStatusClass = 'attempted';
             }
 
-            const disabled = (!isActive || attempted) ? 'disabled' : '';
-            const examId = exam.id;
+            if (status === 'closed') cardClass = 'closed-card';
+            if (status === 'waiting') cardClass = 'waiting-card';
+
+            const disabled = (status !== 'open' || attempted) ? 'disabled' : '';
+
+            // Times
+            const startTime = exam.startTime ? exam.startTime.toDate() : null;
+            const endTime = exam.endTime ? exam.endTime.toDate() : null;
+            const now = new Date();
+
+            let timeHtml = '';
+            let countdownHtml = '';
+
+            if (startTime) {
+                timeHtml += `
+                    <div class="time-row">
+                        <span class="label">📅 يبدأ:</span>
+                        <span class="value">${formatDate(startTime)}</span>
+                    </div>
+                `;
+            }
+            if (endTime) {
+                timeHtml += `
+                    <div class="time-row">
+                        <span class="label">⏰ ينتهي:</span>
+                        <span class="value">${formatDate(endTime)}</span>
+                    </div>
+                `;
+            }
+
+            if (status === 'waiting' && startTime) {
+                const remaining = getTimeToStart(exam.startTime);
+                if (remaining) {
+                    countdownHtml = `<div class="countdown-timer" data-examid="${exam.id}" data-start="${exam.startTime.toDate().toISOString()}">⏳ يبدأ بعد: ${remaining}</div>`;
+                }
+            }
+
+            if (status === 'open' && endTime) {
+                const remaining = getTimeRemaining(exam.endTime);
+                if (remaining) {
+                    countdownHtml = `<div class="countdown-timer" data-examid="${exam.id}" data-end="${exam.endTime.toDate().toISOString()}" style="color:#1f7b4a; background:#e6f0e9;">⏱ متبقي: ${remaining}</div>`;
+                }
+            }
+
+            if (timeHtml) {
+                timeHtml = `<div class="exam-times">${timeHtml}</div>`;
+            }
 
             html += `
-                <div class="exam-card">
+                <div class="exam-card ${cardClass}">
                     <div class="exam-title">
                         ${title}
-                        <span class="status-badge ${statusClass}">${statusText}</span>
+                        <span class="status-badge ${displayStatusClass}">${displayStatusText}</span>
                     </div>
                     <div class="exam-meta">
                         <span class="meta-item">📚 ${subject}</span>
                         ${duration > 0 ? `<span class="meta-item">⏱ ${duration} د</span>` : ''}
                         ${totalQuestions > 0 ? `<span class="meta-item">❓ ${totalQuestions} سؤال</span>` : ''}
                     </div>
+                    ${timeHtml}
+                    ${countdownHtml}
                     <div class="exam-desc">
                         ${description}
                     </div>
                     <div class="exam-actions">
                         ${totalMarks > 0 ? `<span class="exam-score">⭐ ${totalMarks} درجة</span>` : ''}
-                        <button class="btn-start" ${disabled} data-examid="${examId}" data-examtitle="${title}">
+                        <button class="btn-start" ${disabled} data-examid="${exam.id}" data-examtitle="${title}">
                             <i>🚀</i> ابدأ الامتحان
                         </button>
                         ${attempted ? '<span class="already-done">✅ تم الأداء</span>' : ''}
+                        ${status === 'closed' && !attempted ? '<span class="already-done" style="background:#fce9e9; color:#b22234;">🔒 انتهى</span>' : ''}
+                        ${status === 'waiting' && !attempted ? '<span class="already-done" style="background:#fef3d7; color:#b78a1a;">⏳ يبدأ قريباً</span>' : ''}
                     </div>
                 </div>
             `;
@@ -588,7 +751,44 @@
 
         grid.innerHTML = html;
 
-        // ====== مستمعات الأزرار - فتح مودال بيانات الطالب ======
+        // Countdown timers
+        document.querySelectorAll('.countdown-timer').forEach(el => {
+            const examId = el.dataset.examid;
+            const start = el.dataset.start ? new Date(el.dataset.start) : null;
+            const end = el.dataset.end ? new Date(el.dataset.end) : null;
+            
+            const interval = setInterval(() => {
+                const now = new Date();
+                let remaining = '';
+                if (start) {
+                    const diff = start - now;
+                    if (diff <= 0) {
+                        clearInterval(interval);
+                        location.reload();
+                        return;
+                    }
+                    const hours = Math.floor(diff / (1000 * 60 * 60));
+                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                    remaining = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                    el.textContent = `⏳ يبدأ بعد: ${remaining}`;
+                } else if (end) {
+                    const diff = end - now;
+                    if (diff <= 0) {
+                        clearInterval(interval);
+                        location.reload();
+                        return;
+                    }
+                    const hours = Math.floor(diff / (1000 * 60 * 60));
+                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                    remaining = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                    el.textContent = `⏱ متبقي: ${remaining}`;
+                }
+            }, 1000);
+            countdownIntervals.push(interval);
+        });
+
         document.querySelectorAll('.btn-start:not([disabled])').forEach((btn) => {
             btn.addEventListener('click', function() {
                 const examId = this.dataset.examid;
@@ -596,13 +796,21 @@
                 pendingExamId = examId;
                 previewExamName.textContent = examTitle;
                 
-                // تعبئة البيانات الحالية من Auth إذا وجدت
                 if (currentUser) {
                     studentFullName.value = currentUser.displayName || '';
                     studentEmail.value = currentUser.email || '';
+                    if (currentUser.displayName && currentUser.email) {
+                        studentFullName.disabled = true;
+                        studentEmail.disabled = true;
+                    } else {
+                        studentFullName.disabled = false;
+                        studentEmail.disabled = false;
+                    }
                 } else {
                     studentFullName.value = '';
                     studentEmail.value = '';
+                    studentFullName.disabled = false;
+                    studentEmail.disabled = false;
                 }
                 studentGrade.value = '';
                 
@@ -611,7 +819,6 @@
         });
     }
 
-    // ====== تأكيد بيانات الطالب وبدء الامتحان ======
     confirmStudentBtn.addEventListener('click', async function() {
         const name = studentFullName.value.trim();
         const email = studentEmail.value.trim();
@@ -649,7 +856,18 @@
                 throw new Error('يجب تسجيل الدخول أولاً');
             }
 
-            // 🔥 التحقق من وجود محاولة مكتملة مسبقاً
+            // 🔥 التحقق من حالة الامتحان قبل البدء
+            const examDoc = await db.collection('exams').doc(examId).get();
+            if (!examDoc.exists) {
+                throw new Error('الامتحان غير موجود');
+            }
+            const examData = examDoc.data();
+            const statusObj = getExamStatus({ ...examData, id: examId });
+            
+            if (statusObj.status !== 'open') {
+                throw new Error(`الامتحان غير متاح حالياً (${statusObj.statusText})`);
+            }
+
             const existingCompleted = await db.collection("examAttempts")
                 .where("studentId", "==", currentUser.uid)
                 .where("examId", "==", examId)
@@ -665,7 +883,6 @@
                 return;
             }
 
-            // 🔥 التحقق من وجود محاولة قيد التنفيذ
             const existingInProgress = await db.collection("examAttempts")
                 .where("studentId", "==", currentUser.uid)
                 .where("examId", "==", examId)
@@ -680,11 +897,7 @@
                 return;
             }
 
-            // إنشاء محاولة جديدة مع بيانات الطالب المدخلة
             const attemptRef = db.collection("examAttempts").doc();
-            
-            const examDoc = await db.collection('exams').doc(examId).get();
-            const examData = examDoc.data() || {};
             const duration = examData.duration || 0;
 
             await attemptRef.set({
@@ -696,27 +909,25 @@
                 answers: {},
                 remainingTime: duration * 60,
                 studentId: currentUser.uid,
-                studentName: name,  // ✅ الاسم المدخل من الطالب
-                studentEmail: email,  // ✅ الإيميل المدخل من الطالب
+                studentName: name,
+                studentEmail: email,
                 studentGrade: grade || 'غير محدد',
                 studentSection: 'غير محدد',
                 attemptNumber: 1,
                 deviceInfo: navigator.userAgent || 'unknown'
             });
 
-            // إغلاق المودال والانتقال للامتحان
             studentModal.classList.remove('active');
             window.location.href = `exams.html?id=${examId}&attemptId=${attemptRef.id}`;
             
         } catch (error) {
             console.error("❌ خطأ في بدء الامتحان:", error);
-            alert(`حدث خطأ: ${error.message}`);
+            alert(`❌ ${error.message}`);
             this.disabled = false;
             this.textContent = '🚀 بدء الامتحان';
         }
     });
 
-    // ====== إغلاق المودال بالضغط خارجها ======
     studentModal.addEventListener('click', function(e) {
         if (e.target === this) {
             studentModal.classList.remove('active');
@@ -725,7 +936,6 @@
         }
     });
 
-    // ====== جلب بيانات الطالب والمحاولات ======
     async function loadStudentDataAndExams() {
         if (!db || !auth) {
             grid.innerHTML = `
@@ -780,9 +990,8 @@
 
             console.log(`✅ وجدت ${attemptedExamsSet.size} امتحانات مكتملة للطالب`);
 
-            // جلب الامتحانات النشطة
+            // جلب جميع الامتحانات (بدون فلتر active)
             const examsSnapshot = await db.collection("exams")
-                .where("active", "==", true)
                 .orderBy("createdAt", "desc")
                 .get();
 
@@ -817,7 +1026,6 @@
         }
     }
 
-    // ====== مراقبة حالة تسجيل الدخول ======
     function initAuthListener() {
         if (!auth) {
             console.warn("⚠️ Auth not available, using mock user");
@@ -851,7 +1059,6 @@
         });
     }
 
-    // ====== بدء التطبيق ======
     if (auth) {
         initAuthListener();
     } else {
@@ -865,7 +1072,7 @@
         loadStudentDataAndExams();
     }
 
-    console.log('✅ صفحة exam-list.html تعمل مع Firebase - مع مودال بيانات الطالب');
+    console.log('✅ صفحة exam-list.html تعمل مع startTime/endTime وعدادات تنازلية');
 </script>
 
 </body>
